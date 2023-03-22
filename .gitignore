@@ -1,0 +1,14 @@
+.front-end/yarn/*
+!.front-end/yarn/cache
+!.front-end/yarn/patches
+!.front-end/yarn/plugins
+!.front-end/yarn/releases
+!.front-end/yarn/sdks
+!.front-end/yarn/versions
+front-end/.vscode
+
+.vscode
+
+private.ec.key
+private.pem
+public.pem

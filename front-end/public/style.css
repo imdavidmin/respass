@@ -1,0 +1,100 @@
+:root {
+    font: normal 14px 'Sofia Sans'
+}
+
+body {
+    margin: 0
+}
+
+.qrReader canvas {
+    object-fit: cover;
+}
+
+.qrReader {
+    position: relative;
+    padding: 1rem;
+    border-radius: 5px;
+    box-shadow: 0 0 5px #00000030;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    max-width: 400px;
+    max-height: 400px;
+}
+
+*[hidden] {
+    display: none !important
+}
+
+.flex-centre {
+    display: flex
+}
+
+.grid-centre {
+    display: grid
+}
+
+.flex-centre,
+.grid-centre {
+    justify-items: center;
+    align-items: center;
+    justify-content: center;
+}
+
+.flex-dir-col{
+    flex-direction: column;
+}
+
+.padding-1 {
+    padding: 1rem
+}
+
+.gap-1 {
+    gap: 1rem
+}
+
+.shadow-1 {
+    box-shadow: 0 0 6px #00000020
+}
+
+.size-to-parent {
+    height: 100%;
+    width: 100%;
+}
+
+.rounded-1 {
+    border-radius: 5px;
+}
+
+.errorMsg {
+    color: #b82727;
+    font-weight: bold;
+}
+
+.text-l1 {
+    font-size: 1.25rem;
+}
+
+.bold {
+    font-weight: bold;
+}
+
+.absolute-tl {
+    position: absolute;
+    top: 0;
+    left: 0
+}
+
+.fadeIn {
+    animation: fadeIn 0.4s
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0
+    }
+
+    to {
+        opacity: 1
+    }
+}
