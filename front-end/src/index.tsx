@@ -1,5 +1,6 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client';
+import { getAuthState } from './common/getAuthState';
 import { LoginQRScreen } from './LoginQRScreen';
 import { ResidentApp } from './resident/ResidentApp';
 import { StaffApp } from './staff/StaffApp';
@@ -10,8 +11,10 @@ MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEt98y6jlP8awFC3/D3CwrCub4x9oY
 -----END PUBLIC KEY-----`
 
 function App() {
-    const [authState, setAuthState] = useState(0)
+    const [authState, setAuthState] = useState(getAuthState() )
     const delayedSetAuthState = (code: number) => setTimeout(() => setAuthState(code), 1000)
+
+    useEffect(() => { }, [])
 
     function getUI() {
         // Auth state codes are 0: unauthenticated, 1: resident, and 2: staff

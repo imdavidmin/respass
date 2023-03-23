@@ -10,6 +10,7 @@ type QRReaderProps = {
 export function QRReader(props: QRReaderProps) {
     const canvasRef = useRef<HTMLCanvasElement>()
     const videoRef = useRef<HTMLVideoElement>()
+    const disconnectStream = useRef(() => { })
 
     useEffect(() => {
         videoRef.current = document.createElement("video");
@@ -20,12 +21,18 @@ export function QRReader(props: QRReaderProps) {
                 video: { facingMode: "environment" }
             })
             .then(stream => {
+                // Pass the termination function into the disconnectStream mutable object 
+                // in order to stop using the webcam
+                disconnectStream.current = () => stream.getTracks().forEach(mst => mst.stop())
+
                 videoRef.current.srcObject = stream;
                 videoRef.current.setAttribute("playsinline", "true"); // required for iOS Safari
                 videoRef.current.play();
                 setLoadingMessage("⌛")
                 requestAnimationFrame(tick);
             });
+
+        return () => { disconnectStream.current() }
     }, [])
 
     const [statusMessage, setLoadingMessage] = useState("📷 Permission Required")

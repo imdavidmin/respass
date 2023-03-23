@@ -26,11 +26,17 @@ body {
     display: none !important
 }
 
-.flex-centre {
+img.icon {
+    height: 1.25rem;
+}
+
+.flex-centre,
+.flex {
     display: flex
 }
 
-.grid-centre {
+.grid-centre,
+.grid {
     display: grid
 }
 
@@ -41,7 +47,7 @@ body {
     justify-content: center;
 }
 
-.flex-dir-col{
+.flex-dir-col {
     flex-direction: column;
 }
 
