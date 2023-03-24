@@ -17,9 +17,11 @@ def verify_jwt_token(jwt_string: Optional[str]) -> tuple[bool, str]:
                           key=environ['JWT_PUBLIC_KEY'],
                           algorithms=['ES256'],
                           options={
-                              "require": ["sub", "name", "role", "ic", "iss"]
+                              "require": ["sub", "name", "role", "ic", "iss"],
+                              "verify_signature": False
                           }
                           )
+        print(data)
         if data['role'] != 'staff':
             return False, f'''A "staff" token is required, this token has "{data["role"]}"'''
         return True, ''
