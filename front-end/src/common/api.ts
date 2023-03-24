@@ -12,7 +12,7 @@ export const DatabaseService = {
         const indexes = data.columns.reduce((acc, cur, i) => { acc[cur] = i; return acc }, {})
 
         const queryResult: QueryResult = data.data.map(fields => {
-            const log = JSON.parse(fields[indexes['log']]) as ItemLog
+            const log = fields[indexes['log']] as ItemLog
             log.sort((a, b) => b.ts - a.ts)
 
             return {
@@ -22,7 +22,7 @@ export const DatabaseService = {
                 receiver: fields[indexes['receiver']],
                 lastAt: log[0].to,
                 lastUpdate: log[0].ts,
-                notes: fields[indexes['notes']]
+                note: fields[indexes['note']]
             }
         })
 

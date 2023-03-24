@@ -31,6 +31,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["@types/react", "npm:18.0.28"],\
             ["html-webpack-plugin", "virtual:52c67d80b08eb206364a195c16f7df91c7dc6a26a764f291ebf3229b1434a13fec2d2680a9b3db64132e8c60ae33096e1fca82a34dd1b1736e890061af418ba6#npm:5.5.0"],\
             ["jsqr", "npm:1.4.0"],\
+            ["qrcode.react", "virtual:52c67d80b08eb206364a195c16f7df91c7dc6a26a764f291ebf3229b1434a13fec2d2680a9b3db64132e8c60ae33096e1fca82a34dd1b1736e890061af418ba6#npm:3.1.0"],\
             ["react", "npm:18.2.0"],\
             ["react-dom", "virtual:52c67d80b08eb206364a195c16f7df91c7dc6a26a764f291ebf3229b1434a13fec2d2680a9b3db64132e8c60ae33096e1fca82a34dd1b1736e890061af418ba6#npm:18.2.0"],\
             ["ts-loader", "virtual:52c67d80b08eb206364a195c16f7df91c7dc6a26a764f291ebf3229b1434a13fec2d2680a9b3db64132e8c60ae33096e1fca82a34dd1b1736e890061af418ba6#npm:9.4.2"],\
@@ -3434,6 +3435,28 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "linkType": "HARD"\
         }]\
       ]],\
+      ["qrcode.react", [\
+        ["npm:3.1.0", {\
+          "packageLocation": "./.yarn/cache/qrcode.react-npm-3.1.0-068f53fc24-94a2942ecf.zip/node_modules/qrcode.react/",\
+          "packageDependencies": [\
+            ["qrcode.react", "npm:3.1.0"]\
+          ],\
+          "linkType": "SOFT"\
+        }],\
+        ["virtual:52c67d80b08eb206364a195c16f7df91c7dc6a26a764f291ebf3229b1434a13fec2d2680a9b3db64132e8c60ae33096e1fca82a34dd1b1736e890061af418ba6#npm:3.1.0", {\
+          "packageLocation": "./.yarn/__virtual__/qrcode.react-virtual-720493f385/0/cache/qrcode.react-npm-3.1.0-068f53fc24-94a2942ecf.zip/node_modules/qrcode.react/",\
+          "packageDependencies": [\
+            ["qrcode.react", "virtual:52c67d80b08eb206364a195c16f7df91c7dc6a26a764f291ebf3229b1434a13fec2d2680a9b3db64132e8c60ae33096e1fca82a34dd1b1736e890061af418ba6#npm:3.1.0"],\
+            ["@types/react", "npm:18.0.28"],\
+            ["react", "npm:18.2.0"]\
+          ],\
+          "packagePeers": [\
+            "@types/react",\
+            "react"\
+          ],\
+          "linkType": "HARD"\
+        }]\
+      ]],\
       ["qs", [\
         ["npm:6.11.0", {\
           "packageLocation": "./.yarn/cache/qs-npm-6.11.0-caf1bc9dea-6e1f29dd53.zip/node_modules/qs/",\
@@ -3636,6 +3659,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["@types/react", "npm:18.0.28"],\
             ["html-webpack-plugin", "virtual:52c67d80b08eb206364a195c16f7df91c7dc6a26a764f291ebf3229b1434a13fec2d2680a9b3db64132e8c60ae33096e1fca82a34dd1b1736e890061af418ba6#npm:5.5.0"],\
             ["jsqr", "npm:1.4.0"],\
+            ["qrcode.react", "virtual:52c67d80b08eb206364a195c16f7df91c7dc6a26a764f291ebf3229b1434a13fec2d2680a9b3db64132e8c60ae33096e1fca82a34dd1b1736e890061af418ba6#npm:3.1.0"],\
             ["react", "npm:18.2.0"],\
             ["react-dom", "virtual:52c67d80b08eb206364a195c16f7df91c7dc6a26a764f291ebf3229b1434a13fec2d2680a9b3db64132e8c60ae33096e1fca82a34dd1b1736e890061af418ba6#npm:18.2.0"],\
             ["ts-loader", "virtual:52c67d80b08eb206364a195c16f7df91c7dc6a26a764f291ebf3229b1434a13fec2d2680a9b3db64132e8c60ae33096e1fca82a34dd1b1736e890061af418ba6#npm:9.4.2"],\

@@ -1,7 +1,7 @@
 export const ENV = {
     api: {
         db: {
-            queryInventory: 'http://localhost:5000/api/db/queryInventory'
+            queryInventory: 'https://respass-1-k1280343.deta.app/api/db/queryInventory'
         }
     }
 }

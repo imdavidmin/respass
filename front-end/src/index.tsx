@@ -11,7 +11,7 @@ MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEt98y6jlP8awFC3/D3CwrCub4x9oY
 -----END PUBLIC KEY-----`
 
 function App() {
-    const [authState, setAuthState] = useState(getAuthState() )
+    const [authState, setAuthState] = useState(getAuthState())
     const delayedSetAuthState = (code: number) => setTimeout(() => setAuthState(code), 1000)
 
     useEffect(() => { }, [])
@@ -26,7 +26,7 @@ function App() {
     }
 
     return (
-        <div className='grid-centre gap-1' style={{ padding: "2rem", marginTop: "1rem" }}>
+        <div className='grid-centre gap-1 fill-vp-width' style={{ padding: "0 2rem"}}>
             {getUI()}
         </div>
     )
