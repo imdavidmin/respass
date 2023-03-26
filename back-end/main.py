@@ -1,6 +1,6 @@
 from typing import Optional
-from db import make_query, new_resident
-from utils import verify_jwt_token
+from db import query_inventory, new_resident, query_resident
+from utils import get_signed_jwt, verify_jwt_token
 from flask import Flask, request, Request
 from os import environ
 
@@ -12,20 +12,20 @@ preflight = '', 200, {
 } | cors
 
 
-@app.route('/api/jwt/get_secret_pem',  methods=['GET', 'OPTIONS'])
-def get_secret_key():
-    if request.method == 'OPTIONS':
-        return preflight
+@app.route('/api/jwt/getSignedJWT',  methods=['POST', 'OPTIONS'])
+def sign_jwt():
+    auth_result = check_authenticated(request)
+    if auth_result == None:
+        succeeded, res = get_signed_jwt('ES256', request.json)
+        if succeeded:
+            return res, cors
+        else:
+            return res, 400, cors
+    else:
+        return auth_result
 
-    is_verified, error_msg = verify_jwt_token(
-        get_bearer_token(request.headers.get('Authorization')))
-    if not is_verified:
-        body, code = f'''Failed to authenticate JWT: {error_msg}''', 400
 
-    return environ['JWT_PRIVATE_KEY']
-
-
-@app.route('api/db/addResident', methods=['POST', 'OPTIONS'])
+@app.route('/api/db/addResident', methods=['POST', 'OPTIONS'])
 def add_resident():
     auth_result = check_authenticated(request)
     if auth_result == None:
@@ -34,11 +34,20 @@ def add_resident():
     else:
         return auth_result
 
+@app.route('/api/db/queryResident', methods=['POST', 'OPTIONS'])
+def find_resident():
+    auth_result = check_authenticated(request)
+    if auth_result == None:
+        res =  query_resident(request.json)
+        return res, {'content-type': 'application/json'} | cors
+    else:
+        return auth_result
+
 @app.route('/api/db/queryInventory', methods=['POST', 'OPTIONS'])
 def inventory_query():
     auth_result = check_authenticated(request)
     if auth_result == None:
-        body, code = make_query(request.json)
+        body, code = query_inventory(request.json)
         return body, code, cors
     else:
         return auth_result
