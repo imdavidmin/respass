@@ -14,8 +14,6 @@ function App() {
     const [authState, setAuthState] = useState(getAuthState())
     const delayedSetAuthState = (code: number) => setTimeout(() => setAuthState(code), 1000)
 
-    useEffect(() => { }, [])
-
     function getUI() {
         // Auth state codes are 0: unauthenticated, 1: resident, and 2: staff
         switch (authState) {

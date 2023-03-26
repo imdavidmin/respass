@@ -31,21 +31,21 @@ type KeyAlgInfo = {
     hash: string
 }
 
-export async function getSignedJWT(header, payload, privateKey: string, keyAlg?: KeyAlgInfo) {
-    // Returns a signed JWT string using the provided private key
-    // The key is assumed by default to be a ECDSA private key, using a P-256 curve, in PKCS8, PEM base-64 encoded format
-    const alg = { name: "ECDSA", namedCurve: "P-256", hash: 'SHA-256', ...keyAlg }
+// export async function getSignedJWT(header, payload, privateKey: string, keyAlg?: KeyAlgInfo) {
+//     // Returns a signed JWT string using the provided private key
+//     // The key is assumed by default to be a ECDSA private key, using a P-256 curve, in PKCS8, PEM base-64 encoded format
+//     const alg = { name: "ECDSA", namedCurve: "P-256", hash: 'SHA-256', ...keyAlg }
 
-    const strToBase64Url = (s) => convertBase64ToBase64URL(btoa(s));
-    const signKey = await getKey("sign", privateKey, alg);
+//     const strToBase64Url = (s) => convertBase64ToBase64URL(btoa(s));
+//     const signKey = await getKey("sign", privateKey, alg);
 
-    const enc = new TextEncoder();
-    const encodedString = strToBase64Url(JSON.stringify(header)) + "." + strToBase64Url(JSON.stringify(payload));
-    const signatureAB = await crypto.subtle.sign(alg, signKey, enc.encode(encodedString));
-    const signature = strToBase64Url(String.fromCharCode(...new Uint8Array(signatureAB)));
+//     const enc = new TextEncoder();
+//     const encodedString = strToBase64Url(JSON.stringify(header)) + "." + strToBase64Url(JSON.stringify(payload));
+//     const signatureAB = await crypto.subtle.sign(alg, signKey, enc.encode(encodedString));
+//     const signature = strToBase64Url(String.fromCharCode(...new Uint8Array(signatureAB)));
 
-    return encodedString + "." + signature;
-}
+//     return encodedString + "." + signature;
+// }
 
 export async function validateJWT(jwt: string, publicKey: string, keyAlg?: KeyAlgInfo) {
     const alg = { name: "ECDSA", namedCurve: "P-256", hash: 'SHA-256', ...keyAlg }

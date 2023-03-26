@@ -1,5 +1,4 @@
-import { LocalStorageKey } from "../enums"
-import { AuthTokenPayload } from "../types"
+import { AuthTokenPayload, LocalStorageKey } from "../types"
 
 export function getAuthState() {
     const info = getAuthInfo()
@@ -12,6 +11,6 @@ export function getAuthState() {
     }
 }
 
-export function getAuthInfo(){
+export function getAuthInfo() {
     return JSON.parse(localStorage.getItem(LocalStorageKey.AuthInfo)) as AuthTokenPayload
 }

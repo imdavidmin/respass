@@ -3,7 +3,7 @@ import { ENV } from "./env"
 import { fetchJsonPost, isOkayJSON } from './util'
 
 export const DatabaseService = {
-    async query(queryKV: QueryableKV, token: string): Promise<QueryResult | null> {
+    async queryInventory(queryKV: QueryableKV, token: string): Promise<QueryResult | null> {
         const res = await fetchJsonPost(ENV.api.db.queryInventory, queryKV, token)
         if (!isOkayJSON(res)) return null
         const data = await res.json() as DatabaseService.Response.QueryInventory
@@ -27,11 +27,31 @@ export const DatabaseService = {
         })
 
         return queryResult
+    },
+    async querySingleIdentity(kv: { [k: string]: string }, token): Promise<DatabaseService.Response.QueryResident> {
+        const res = await fetchJsonPost(ENV.api.db.queryResident, kv, token)
+        return isOkayJSON(res) ? await res.json() : null
+    },
+    async addResident(kv: { [k: string]: string }, token): Promise<DatabaseService.Response.AddResident> {
+        const res = await fetchJsonPost(ENV.api.db.queryResident, kv, token)
+        if (!res.ok) return null
+        const id = Number.parseInt(await res.text())
+        return Number.isInteger(id) ? id : null
+    },
+}
+
+export const JWTService = {
+    async getJWT(payload: { [k: string]: any }, token): Promise<string> {
+        const res = await fetchJsonPost(ENV.api.jwt.getSignedJWT, payload, token)
+        return res.ok ? await res.text() : null
     }
 }
 
 export namespace DatabaseService {
     export namespace Response {
-        export type QueryInventory = { columns: Array<string>, data: Array<Array<any>>, index: Array<number> }
+        type QueryResult = { columns: Array<string>, data: Array<Array<any>>, index: Array<number> }
+        export type QueryInventory = QueryResult
+        export type QueryResident = QueryResult
+        export type AddResident = number
     }
 }

@@ -57,7 +57,7 @@ function InventoryResults(props: InventoryResultsProps) {
         setStatusMsg(isRetrievingMsg)
 
         const staffJWTToken = localStorage.getItem(LocalStorageKey.JWT)
-        DatabaseService.query(props.query, staffJWTToken)
+        DatabaseService.queryInventory(props.query, staffJWTToken)
             .then(r => {
                 if (r.length == 0) {
                     setStatusMsg('🈳 No record of items belonging to this resident')
