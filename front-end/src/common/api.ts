@@ -38,6 +38,27 @@ export const DatabaseService = {
         const id = Number.parseInt(await res.text())
         return Number.isInteger(id) ? id : null
     },
+    async getAllResidents(token: string) {
+        const res = await fetch(ENV.api.db.getAllResidents, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        })
+        const result: { [bld: string]: { [unit: string]: Array<string> } } = {}
+
+        if (!res.ok || !res.headers.get('content-type')?.includes('application/json')) return result
+        const data: DatabaseService.Response.GetAllResidents = await res.json()
+
+        const fields = ['name', 'bld', 'unit']
+        const [nameIndex, buildingIndex, unitIndex] = fields.map(f => data.columns.indexOf(f))
+        data.data.forEach(row => {
+            const [bld, unit, name]: Array<string> = [row[buildingIndex], row[unitIndex], row[nameIndex]]
+            result[bld] ??= {}
+            result[bld][unit] ??= []
+            result[bld][unit].push(name)
+        })
+        return result
+    }
 }
 
 export const JWTService = {
@@ -53,5 +74,6 @@ export namespace DatabaseService {
         export type QueryInventory = QueryResult
         export type QueryResident = QueryResult
         export type AddResident = number
+        export type GetAllResidents = QueryResult
     }
 }

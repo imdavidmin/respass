@@ -33,5 +33,6 @@ export enum ItemStatus {
 
 export enum LocalStorageKey {
     JWT = 'authJWT',
-    AuthInfo = 'authInfo'
+    AuthInfo = 'authInfo',
+    ResidentDirectory = 'resDir'
 }

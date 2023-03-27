@@ -1,5 +1,6 @@
 import React, { CSSProperties, useEffect, useRef, useState } from 'react';
 import { DatabaseService } from '../common/api';
+import { getAuthInfo } from '../common/getAuthState';
 import { QRReader } from '../common/qr';
 import { qrChangeHandler } from '../common/qrChangeHandler';
 import { AuthTokenPayload, QueryableKV, QueryResult, LocalStorageKey, ItemRecord } from '../types';
@@ -7,21 +8,41 @@ import { AuthTokenPayload, QueryableKV, QueryResult, LocalStorageKey, ItemRecord
 export function ResidentCollection() {
     const [authenticatedResident, setAuthenticatedResident] = useState({} as AuthTokenPayload);
     const [qrErrorMsg, setQrErrorMsg] = useState(null);
+    const [confirmSkip, setConfirmSkip] = useState(false)
     const codeHandler = (code: string) => qrChangeHandler(code, () => { }, setAuthenticatedResident, setQrErrorMsg);
 
-    return <>
-        <h1>Item Collection</h1>
-        {authenticatedResident.name
-            ? <>
-                <AuthenticatedResidentBadge resident={authenticatedResident} />
-                <InventoryResults query={{ sub: [authenticatedResident.sub] }} />
-            </>
-            : <div className='grid gap-1'>
-                Please scan the resident's code
-                <QRReader outputHandler={codeHandler} />
-                <p>{qrErrorMsg || ''}</p>
-            </div>}
-    </>;
+    function skipAuth() { 
+        // TODO
+    }
+    
+    return authenticatedResident.name
+        ? <>
+            <AuthenticatedResidentBadge resident={authenticatedResident} />
+            <InventoryResults query={{ sub: [authenticatedResident.sub] }} />
+        </>
+        : <div className='grid gap-1'>
+            <div className='centre-text' style={{ maxWidth: '400px' }}>
+                {!confirmSkip
+                    ? <>
+                        <p>Please scan the resident's QR code</p>
+                        <button onClick={() => setConfirmSkip(!confirmSkip)} style={{ width: 'max-content', margin: '0 auto 1rem' }}>Skip authentication</button>
+                    </>
+                    : <>
+                        <p>
+                            If you do not scan an identification QR code, the parcel will be marked as collected by
+                            <b style={{ color: 'var(--theme-primary)' }}> {getAuthInfo().name}</b>, and you will assume responsibiliy.
+                        </p>
+                        <div className='flex-centre gap-1' style={{ margin: '1rem' }}>
+                            <button onClick={skipAuth}>Confirm</button>
+                            <button onClick={() => setConfirmSkip(!confirmSkip)} className='secondary'>Cancel</button>
+                        </div>
+                    </>}
+
+            </div>
+            <QRReader outputHandler={codeHandler} />
+            <p className='centre-text'>{qrErrorMsg || ''}</p>
+
+        </div>
 }
 
 

@@ -21,11 +21,11 @@ export function LoginQRScreen(props: { setAuthState: (code: number) => void; }) 
         props.setAuthState(getAuthState());
     }, [authInfo]);
 
-    return <>
-        <h1 style={{ margin: '0' }}>Hey there!</h1>
+    return <div className='flex-centre' style={{ height: '100vh' }}>
+        <h1 style={{ marginBottom: '0' }}>Hey there!</h1>
         <p>Please present your Respass QR code</p>
         <QRReader outputHandler={setScannedQR} successMsg={authStatus && `Hi, ${authInfo.name}`} />
         {errorMsg && <p className='errorMsg'>{errorMsg}</p>}
-    </>;
+    </div>;
 }
 

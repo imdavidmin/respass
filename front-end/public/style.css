@@ -1,16 +1,37 @@
 :root {
-    font: normal 14px 'Sofia Sans';
     --theme-primary: #7104d7;
     --theme-primary-text: #fff;
+    --action-secondary: #ddd;
+    --action-secondary-text: #333;
     --spinner-size: 2rem;
     --spinner-thickness: 2px;
 }
 
-body {
-    margin: 0
+:root,
+button {
+    font: normal 14px 'Sofia Sans';
 }
 
-button {
+body {
+    margin: 0;
+    background: #f8f8f8
+}
+
+input {
+    border: 0;
+    border-radius: 0;
+    border-bottom: 1px solid;
+    background: #00000002;
+    padding: 0.5rem;
+    outline-color: var(--theme-primary);
+}
+
+button:not(.special).secondary {
+    background: var(--action-secondary);
+    color: var(--action-secondary-text);
+}
+
+button:not(.special) {
     margin: 0;
     border: 0;
     padding: 0.5rem 1rem;
@@ -22,14 +43,14 @@ button {
     transition: all 0.2s;
 }
 
-button[disabled] {
+button:not(.special)[disabled] {
     background: #eee;
     color: #999;
     box-shadow: none;
     cursor: unset;
 }
 
-button:not([disabled]):hover {
+button:not(.special):not([disabled]):hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 7px #00000040;
 }
@@ -44,6 +65,21 @@ nav a {
 nav a.active {
     color: var(--theme-primary);
     border-bottom: 1px solid;
+}
+
+button.login-status {
+    border: 0;
+    cursor: pointer;
+    height: 2rem;
+    width: 8rem;
+    background: #00000010;
+    border-radius: 5rem;
+    transition: all 0.2s;
+}
+
+button.login-status:hover {
+    background: #00000080;
+    color: #fff
 }
 
 .qrReader canvas {
@@ -123,6 +159,10 @@ img.icon {
 
 .gap-1 {
     gap: 1rem
+}
+
+.centre-text {
+    text-align: center;
 }
 
 .shadow-1 {
