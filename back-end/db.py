@@ -74,3 +74,11 @@ def query_resident(query_json: Optional[dict[str, str]]):
         print(query)
         df = read_sql_query(query, db)
         return df.to_json(orient='split')
+
+def get_all_residents():
+    with engine.connect() as db:
+        id_results = table("identity", column("name"), column("bld"),
+                 column("unit"), column("id"))
+        df = read_sql_query(select(id_results),db)
+
+        return df.to_json(orient='split')
