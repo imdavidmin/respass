@@ -23,6 +23,8 @@ export type ItemRecord = {
 
 export type ItemLog = Array<{ ts: number, to: string, by: string }>
 
+export type ResidentDirectory = { [bld: string]: { [unit: string]: Array<[string, string]> } }
+
 export enum ItemStatus {
     Special = 's',
     Completed = 'c',

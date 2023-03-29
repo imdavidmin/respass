@@ -1,10 +1,15 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
+import { DatabaseService } from "../common/api";
+import { ToastContext } from "../ToastWrapper";
+import { LocalStorageKey } from "../types";
+import { StaffAppContext } from "./StaffApp";
 
+// TODO Load these from LocalStorage after reading site configs from Cloudflare
 const OBJECT_TYPES = [{ label: '📦', value: 'parcel' }, { label: '🔑', value: 'key' }]
 const BUILDINGS = [
-    { label: 'Banbury Point', value: 'C' },
+    { label: 'Banbury Point', value: 'Banbury Point' },
     { label: 'Chorley Court', value: 'E' },
-    { label: 'Lamington Heights', value: 'D' },
+    { label: 'Lamington Heights', value: 'Lamington Heights' },
     { label: '14 Rifle Street', value: 'F' },
     { label: 'Madeira Street', value: 'S' }
 ]
@@ -13,33 +18,36 @@ const INVENTORY_LOCATIONS = [{ value: 'Shelf A' }, { value: 'Shelf B' }]
 
 const INVENTORY_LOCATIONS_DATALIST_ID = `ri-form-inventory-locations`
 type InventoryReceiptFormRow = [string, string, string, string, string, string]
-type InventoryReceiptForm = Array<InventoryReceiptFormRow>
+export type InventoryReceiptForm = Array<InventoryReceiptFormRow>
 type TableColumn = { label: string, type?: string, options?: Array<{ label?: string, value: string }> }
 
 const columns: Array<TableColumn> = [
-    { label: 'Type', type: 'select', options: OBJECT_TYPES },
-    { label: 'Building', type: 'select', options: BUILDINGS },
-    { label: 'Unit', type: 'text' },
-    { label: 'Recipient', type: 'list' },
-    { label: 'Location', type: 'select', options: INVENTORY_LOCATIONS },
-    { label: 'Note', type: 'text' },
+    { label: 'Type', options: OBJECT_TYPES },
+    { label: 'Building', options: BUILDINGS },
+    { label: 'Unit' },
+    { label: 'Recipient' },
+    { label: 'Location', options: INVENTORY_LOCATIONS },
+    { label: 'Note' },
     { label: '' },
 ]
 
 export function ReceiveInventory() {
-    const [form, setForm] = useState<InventoryReceiptForm>([])
-    const [formUI, setFormUI] = useState<Array<Array<JSX.Element>>>([])
+    const EMPTY_ROW: InventoryReceiptFormRow = [OBJECT_TYPES[0].value, BUILDINGS[0].value, null, null, null, null]
+
+    const [form, setForm] = useState<InventoryReceiptForm>([EMPTY_ROW])
     const [removeRow, setRemoveRow] = useState(null)
     const [isFormComplete, setIsFormComplete] = useState(false)
     const [residents, setResidents] = useState({})
 
-    useEffect(() => {
-        addRow();
-        retrieveAllResidents(setResidents)
-    }, [])
+    const dataFetchStatus = useContext(StaffAppContext)
 
     useEffect(() => {
-        // Last column is notes, which is optional
+        dataFetchStatus?.resDir &&
+            setResidents(JSON.parse(localStorage.getItem(LocalStorageKey.ResidentDirectory)))
+    }, [dataFetchStatus])
+
+    useEffect(() => {
+        // Last column is "notes", which is optional
         setIsFormComplete(form.every(row => row.slice(0, row.length - 1).every(v => v != null)))
     }, [form])
 
@@ -48,23 +56,21 @@ export function ReceiveInventory() {
         setForm([...form])
     }
 
-    function addRow() {
-        setForm([...form, [OBJECT_TYPES[0].value, BUILDINGS[0].value, null, null, null, null]])
-    }
-
     useEffect(() => {
         if (removeRow === null) return
 
         form.splice(removeRow, 1)
-        formUI.splice(removeRow, 1)
         setForm([...form])
-        setFormUI([...formUI])
 
         setRemoveRow(null)
     }, [removeRow])
 
     function submitForm() {
-        submitEntries(form, () => { })
+        submitEntries(form, (clearForm: boolean) => {
+            if (clearForm) {
+                setForm([])
+            }
+        })
     }
 
     const formGridStyle = {
@@ -73,8 +79,14 @@ export function ReceiveInventory() {
     }
 
     return <>
+        {!dataFetchStatus.resDir &&
+            <div className="flex-centre gap-1">
+                <div className="spinner" ></div>
+                Still loading resident data...
+            </div>
+        }
         <div className="grid gap-1" style={formGridStyle}>
-            {columns.map(o => <b>{o.label}</b>)}
+            {columns.map((o, i) => <b key={i}>{o.label}</b>)}
             {form.map((r, i) => <FormRow key={i}
                 row={i}
                 data={r}
@@ -83,14 +95,14 @@ export function ReceiveInventory() {
                 removeTrigger={() => setRemoveRow(i)}
             />)}
             <datalist id={INVENTORY_LOCATIONS_DATALIST_ID}>
-                {INVENTORY_LOCATIONS.map(l => <option value={l.value}></option>)}
+                {INVENTORY_LOCATIONS.map((l, i) => <option key={i} value={l.value}></option>)}
             </datalist>
         </div>
         {form.length >= 10 &&
             'We recommend submitting for every 10 entries to avoid accidental data loss'
         }
         <div className="flex-centre gap-1">
-            <button onClick={addRow}>Add another entry</button>
+            <button onClick={() => setForm([...form, EMPTY_ROW])}>Add another entry</button>
             <button onClick={submitForm} disabled={!isFormComplete}>Submit</button>
         </div>
     </>
@@ -107,7 +119,7 @@ function FormRow(props: { row: number, data: Array<any>, residents: {}, updateHa
     // If building and unit is filled for a row, update suggested names
     const [bld, unit] = [props.data[1], props.data[2]]
     const datalistOptions: Array<Array<string>> = bld && unit
-        ? props.residents[bld][unit]
+        ? props.residents?.[bld]?.[unit]?.map(([name, id]) => name) ?? []
         : []
 
     const resNamesDatalistId = `ri-form-row${props.row}-names`
@@ -117,7 +129,7 @@ function FormRow(props: { row: number, data: Array<any>, residents: {}, updateHa
         <select value={getValue(0)} onChange={(e) => formUpdateHandler(e, 0)}>
             {columns[0].options.map(mapDropdownOptions)}
         </select>
-        <select value={getValue(1)} onChange={(e) => formUpdateHandler(e, 0)}>
+        <select value={getValue(1)} onChange={(e) => formUpdateHandler(e, 1)}>
             {columns[1].options.map(mapDropdownOptions)}
         </select>
         <input value={getValue(2)} type='text' onChange={e => formUpdateHandler(e, 2)}></input>
@@ -138,8 +150,22 @@ function FormRow(props: { row: number, data: Array<any>, residents: {}, updateHa
     </>
 }
 
-async function submitEntries(form: InventoryReceiptForm, onComplete: (e?) => void) {
-
+async function submitEntries(form: InventoryReceiptForm, onComplete: (clearForm?: boolean) => void) {
+    const result = await DatabaseService.addInventory(form, localStorage.getItem(LocalStorageKey.JWT))
+    if (result.res) {
+        const addToast = useContext(ToastContext)
+        addToast({
+            title: '🚨 Submission failed',
+            message: <div className="grid gap-1">
+                The items have not been recorded, try again, or contact support noting the message below.
+                <span style={{ opacity: 0.8, fontSize: '0.8rem' }}>
+                    {`Status: ${result.res.status}\nMessage: ${await result.res.text()}`}
+                </span>
+            </div>,
+            barStyle: { background: '#df8000' }
+        })
+    }
+    onComplete(result.success)
 }
 
 async function retrieveAllResidents(setResidents: (data) => void) {

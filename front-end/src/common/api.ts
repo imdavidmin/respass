@@ -1,4 +1,7 @@
-import { ItemLog, ItemRecord, QueryableKV, QueryResult } from "../types"
+//@ts-nocheck
+
+import { InventoryReceiptForm } from "../staff/ReceiveItems"
+import { ItemLog, QueryableKV, QueryResult, ResidentDirectory } from "../types"
 import { ENV } from "./env"
 import { fetchJsonPost, isOkayJSON } from './util'
 
@@ -38,26 +41,30 @@ export const DatabaseService = {
         const id = Number.parseInt(await res.text())
         return Number.isInteger(id) ? id : null
     },
-    async getAllResidents(token: string) {
+    async getAllResidents(token: string): Promise<ResidentDirectory> {
         const res = await fetch(ENV.api.db.getAllResidents, {
             headers: {
                 Authorization: `Bearer ${token}`
             }
         })
-        const result: { [bld: string]: { [unit: string]: Array<string> } } = {}
+        const result: ResidentDirectory = {}
 
         if (!res.ok || !res.headers.get('content-type')?.includes('application/json')) return result
         const data: DatabaseService.Response.GetAllResidents = await res.json()
 
-        const fields = ['name', 'bld', 'unit']
-        const [nameIndex, buildingIndex, unitIndex] = fields.map(f => data.columns.indexOf(f))
+        const fields = ['name', 'bld', 'unit', 'id']
+        const [nameIndex, buildingIndex, unitIndex, idIndex] = fields.map(f => data.columns.indexOf(f))
         data.data.forEach(row => {
-            const [bld, unit, name]: Array<string> = [row[buildingIndex], row[unitIndex], row[nameIndex]]
+            const [bld, unit, name, id]: Array<string> = [row[buildingIndex], row[unitIndex], row[nameIndex], row[idIndex]]
             result[bld] ??= {}
             result[bld][unit] ??= []
-            result[bld][unit].push(name)
+            result[bld][unit].push([name, id])
         })
         return result
+    },
+    async addInventory(form: InventoryReceiptForm, token: string) {
+        const res = await fetchJsonPost(ENV.api.db.addInventory, form, token)
+        return res.ok ? { success: true } : { success: false, res: null }
     }
 }
 

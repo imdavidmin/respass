@@ -5,7 +5,8 @@ export const ENV = {
             queryInventory: `${API_ROOT}/db/queryInventory`,
             queryResident: `${API_ROOT}/db/queryResident`,
             addResident: `${API_ROOT}/db/addResident`,
-            getAllResidents: `${API_ROOT}/db/getAllResidents`
+            getAllResidents: `${API_ROOT}/db/getAllResidents`,
+            addInventory: `${API_ROOT}/db/addInventory`
         },
         jwt: {
             getSignedJWT: `${API_ROOT}/jwt/getSignedJWT`

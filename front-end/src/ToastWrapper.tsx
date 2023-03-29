@@ -1,6 +1,6 @@
-import React, { ComponentProps, createContext, CSSProperties, HTMLAttributes, useState } from 'react';
+import React, { createContext, CSSProperties, HTMLAttributes, useState } from 'react';
 
-export const ToastContext = createContext((t: ToastCardProps) => { })
+export const ToastContext = createContext((t: ToastInfo) => { })
 
 type ToastInfo = Omit<ToastCardProps, 'dismissTrigger'>
 
