@@ -1,6 +1,8 @@
 from sqlalchemy import create_engine, insert, text, select, table, column, func
 from pandas import DataFrame, read_sql_query
 from utils import debug_print, has_all_fields
+import time
+import json
 
 from typing import Optional, TypedDict
 from typing_extensions import NotRequired
@@ -13,7 +15,12 @@ load_dotenv(dotenv_path=Path('.') / '.env')
 engine = create_engine(environ['DB_CONNECTION_STRING'], pool_pre_ping=True)
 max_records = 100
 
-InventoryQueryPayload = TypedDict('InventoryQueryPayload', {'sub': list[str]})
+InventoryQueryPayload = TypedDict('InventoryQueryPayload', {
+    'bld': list[str],
+    'unit': list[str],
+    'name': Optional[list[str]],
+    'id': Optional[list[str]]
+})
 ResidentQueryPayload = TypedDict('ResidentQueryPayload', {
     'name': str,
     'bld': str,
@@ -21,9 +28,36 @@ ResidentQueryPayload = TypedDict('ResidentQueryPayload', {
     'role': NotRequired[str]
 })
 
+AddInventoryPayload = list[list[str]]
 
 id_table = table("identity", column("name"), column("bld"),
                  column("unit"), column("id"), column('role'))
+inventory_table = table('inventory', column("type"), column('owner_bld'), column('owner_unit'), column(
+    'owner_name'), column("log"), column("note"), column("status"), column("receiver"),  column(
+    "received"))
+
+
+def add_inventory(payload: Optional[AddInventoryPayload], receiver_id: int):
+    try:
+        if payload == None:
+            raise Exception('No Payload')
+        
+        with engine.connect() as db:
+            entries = []
+            for row in payload:
+                item_type, bld, unit, name, location, note = tuple(row)
+                now = int(time.time())
+                log = json.dumps(
+                    {"by": receiver_id, "to": location, "ts": now})
+                entries.append([
+                    item_type, bld, unit, name, log, note, 'w', receiver_id, func.now()])
+            query = inventory_table.insert().values(entries)
+
+            db.execute(query)
+            db.commit()
+        return 'good', 200
+    except Exception as e:
+        return str(e), 400
 
 
 def query_inventory(query_json: Optional[InventoryQueryPayload]):
@@ -78,7 +112,7 @@ def query_resident(query_json: Optional[dict[str, str]]):
 def get_all_residents():
     with engine.connect() as db:
         id_results = table("identity", column("name"), column("bld"),
-                 column("unit"), column("id"))
-        df = read_sql_query(select(id_results),db)
+                           column("unit"), column("id"))
+        df = read_sql_query(select(id_results), db)
 
         return df.to_json(orient='split')
