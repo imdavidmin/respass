@@ -4,23 +4,42 @@ import { getAuthInfo } from '../common/getAuthState';
 import { QRReader } from '../common/qr';
 import { qrChangeHandler } from '../common/qrChangeHandler';
 import { AuthTokenPayload, QueryableKV, QueryResult, LocalStorageKey, ItemRecord } from '../types';
+import { getSiteConfig, ConfigKey } from '../common/util';
+import { BuildingAndUnitInput } from '../common/Components/BuildingAndUnitInput';
 
 export function ResidentCollection() {
     const [authenticatedResident, setAuthenticatedResident] = useState({} as AuthTokenPayload);
     const [qrErrorMsg, setQrErrorMsg] = useState(null);
     const [confirmSkip, setConfirmSkip] = useState(false)
+    const [authSkipped, setAuthSkipped] = useState(false)
+    const [form, setForm] = useState([getSiteConfig(ConfigKey.AvailableBuildings)[0].value, null])
+
     const codeHandler = (code: string) => qrChangeHandler(code, () => { }, setAuthenticatedResident, setQrErrorMsg);
 
-    function skipAuth() { 
-        // TODO
+    const queryByBuildingAndUnit = () => {
+        setAuthenticatedResident({ ...getAuthInfo(), bld: form[0], unit: form[1] })
     }
-    
-    return authenticatedResident.name
-        ? <>
-            <AuthenticatedResidentBadge resident={authenticatedResident} />
-            <InventoryResults query={{ sub: [authenticatedResident.sub] }} />
+
+    if (authenticatedResident.name) {
+        return <>
+            {authSkipped
+                ? <b className='padding-1'>⚠️ Checking out as {getAuthInfo().name}</b>
+                : <AuthenticatedResidentBadge resident={authenticatedResident} />}
+            <InventoryResults query={{ bld: authenticatedResident.bld, unit: authenticatedResident.unit }} />
         </>
-        : <div className='grid gap-1'>
+    }
+
+    if (authSkipped) {
+        return <>
+            <div className='grid gap-1 padding-1' style={{ gridTemplateColumns: 'max-content 1fr', alignItems: 'center' }}>
+                <BuildingAndUnitInput form={form} setForm={setForm}/>
+            </div>
+            <button disabled={form.some(field => field === null)} onClick={queryByBuildingAndUnit} style={{ margin: '1rem' }}>
+                Show available items
+            </button>
+        </>
+    } else {
+        return <div className='grid gap-1'>
             <div className='centre-text' style={{ maxWidth: '400px' }}>
                 {!confirmSkip
                     ? <>
@@ -33,7 +52,7 @@ export function ResidentCollection() {
                             <b style={{ color: 'var(--theme-primary)' }}> {getAuthInfo().name}</b>, and you will assume responsibiliy.
                         </p>
                         <div className='flex-centre gap-1' style={{ margin: '1rem' }}>
-                            <button onClick={skipAuth}>Confirm</button>
+                            <button onClick={() => setAuthSkipped(true)}>Confirm</button>
                             <button onClick={() => setConfirmSkip(!confirmSkip)} className='secondary'>Cancel</button>
                         </div>
                     </>}
@@ -41,10 +60,9 @@ export function ResidentCollection() {
             </div>
             <QRReader outputHandler={codeHandler} />
             <p className='centre-text'>{qrErrorMsg || ''}</p>
-
         </div>
+    }
 }
-
 
 function AuthenticatedResidentBadge(props: { resident: AuthTokenPayload }) {
     return <div className='grid gap-1 rounded-1 padding-1' style={{ maxWidth: '400px', border: '1px solid #00000020' }}>
@@ -61,7 +79,7 @@ function AuthenticatedResidentBadge(props: { resident: AuthTokenPayload }) {
     </div>
 }
 
-type InventoryResultsProps = { query: QueryableKV }
+type InventoryResultsProps = { query: Partial<AuthTokenPayload> }
 function InventoryResults(props: InventoryResultsProps) {
     const [queryResults, setQueryResults] = useState(null as QueryResult)
     const [statusMsg, setStatusMsg] = useState<string | JSX.Element>('⏳ Waiting for resident token')
@@ -104,7 +122,6 @@ function InventoryResults(props: InventoryResultsProps) {
         gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))'
     }
 
-
     return <>
         {statusMsg}
         <div className="grid gap-1 padding-1" style={cardGridStyle}>
@@ -121,12 +138,29 @@ function ItemCard(props: { item: ItemRecord, markCollection: (boolean) => void }
     const toggleCheck = () => { setChecked(!checked); props.markCollection(!checked) }
     const itemIcon = getIcon(props.item.type)
 
-    return <div className='shadow-1 rounded-1 flex gap-1 padding-1 float-on-hover' onClick={toggleCheck} style={{ background: checked ? '#f8f8f8' : '#fff' }}>
-        <span style={{ fontSize: '2rem' }}>{itemIcon}</span>
-        <div className='grid'>
-            <b>{props.item.lastAt}</b>
-            <span>{props.item.note}</span>
+    const defaultStyle: CSSProperties = { background: '#fff', overflow: 'hidden' }
+    const checkedStyle: CSSProperties = { background: '#f8f8f8', outline: '2px solid var(--theme-primary)' }
+
+    const nameTagStyle: CSSProperties = {
+        background: checked ? '#ddd' : '#ffda29',
+        color: checked ? '#333' : '#000',
+        fontWeight: 'bold',
+        padding: '0.5rem',
+        textTransform: 'uppercase'
+    }
+
+    return <div
+        className='shadow-1 rounded-1 float-on-hover flex-dir-col'
+        onClick={toggleCheck}
+        style={checked ? checkedStyle : defaultStyle}>
+        <div className='flex gap-1 padding-1'>
+            <span style={{ fontSize: '2rem' }}>{itemIcon}</span>
+            <div className='grid'>
+                <b>{props.item.lastAt}</b>
+                <span>{props.item.note}</span>
+            </div>
         </div>
+        <div className='centre-text' style={nameTagStyle}>{props.item.owner}</div>
     </div>
 }
 

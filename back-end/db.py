@@ -41,14 +41,14 @@ def add_inventory(payload: Optional[AddInventoryPayload], receiver_id: int):
     try:
         if payload == None:
             raise Exception('No Payload')
-        
+
         with engine.connect() as db:
             entries = []
             for row in payload:
                 item_type, bld, unit, name, location, note = tuple(row)
                 now = int(time.time())
                 log = json.dumps(
-                    {"by": receiver_id, "to": location, "ts": now})
+                    [{"by": receiver_id, "to": location, "ts": now}])
                 entries.append([
                     item_type, bld, unit, name, log, note, 'w', receiver_id, func.now()])
             query = inventory_table.insert().values(entries)
@@ -64,17 +64,18 @@ def query_inventory(query_json: Optional[InventoryQueryPayload]):
     if query_json == None:
         raise ValueError('Query JSON cannot be None')
 
-    owner_filter = ','.join(map(str, query_json['sub']))
     with engine.connect() as db:
-        query = f'''SELECT * FROM inventory WHERE owner IN ({owner_filter}) LIMIT {max_records}'''
+        inventory_result = table('inventory', column('type'),  column('owner_bld'), column('owner_unit'), column(
+            'owner_name'), column("note"), column("status"), column("status"), column('log'), column('id'))
+        query = select(inventory_result).where(
+            func.lower(column('owner_bld')) == func.lower(query_json['bld']) and
+            func.lower(column('owner_unit') == func.lower(query_json['unit']))
+        )
 
         debug_print(
             'Submitting query to database with the SQL statement:\n', query)
 
-        df: DataFrame = read_sql_query(text(query), db)
-
-        df['received'] = \
-            df.index.to_series().astype(int).floordiv(1000000).astype(int)
+        df: DataFrame = read_sql_query(query, db)
 
         return df.to_dict(orient='split'), 200
 

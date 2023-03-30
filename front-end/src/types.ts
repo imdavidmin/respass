@@ -17,7 +17,7 @@ export type ItemRecord = {
     receiver: string,
     lastAt: string,
     lastUpdate: number,
-    status: ItemStatus,
+    owner: string,
     note: string
 }
 
@@ -36,5 +36,6 @@ export enum ItemStatus {
 export enum LocalStorageKey {
     JWT = 'authJWT',
     AuthInfo = 'authInfo',
-    ResidentDirectory = 'resDir'
+    ResidentDirectory = 'resDir',
+    SiteConfig = 'siteConfig'
 }

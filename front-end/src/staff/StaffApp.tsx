@@ -18,7 +18,7 @@ export function StaffApp() {
     ]
     const [activeTab, setActiveTab] = useState(0)
     const isFirstLoad = useRef(true)
-    const [dataFetchStatus, setDataFetchStatus] = useState({ resDir: false })
+    const [dataFetch, setDataFetch] = useState({ resDir: false })
     const addToast = useContext(ToastContext)
 
 
@@ -37,10 +37,10 @@ export function StaffApp() {
                 </div>,
                 barStyle: { background: '#df8000' }
             }))
-            .finally(() => setDataFetchStatus({ resDir: true }))
+            .finally(() => setDataFetch({ resDir: true }))
     }, [])
 
-    return <StaffAppContext.Provider value={dataFetchStatus}>
+    return <StaffAppContext.Provider value={dataFetch}>
         <NavMenu options={NAV_OPTIONS}
             setter={id => setActiveTab(NAV_OPTIONS.findIndex(o => o.id == id))}
             active={activeTab}

@@ -14,6 +14,11 @@ const BUILDINGS = [
     { label: 'Madeira Street', value: 'S' }
 ]
 const INVENTORY_LOCATIONS = [{ value: 'Shelf A' }, { value: 'Shelf B' }]
+localStorage.setItem(LocalStorageKey.SiteConfig, JSON.stringify({
+    OBJECT_TYPES: OBJECT_TYPES,
+    BUILDINGS: BUILDINGS,
+    INVENTORY_LOCATIONS: INVENTORY_LOCATIONS
+}))
 
 
 const INVENTORY_LOCATIONS_DATALIST_ID = `ri-form-inventory-locations`
@@ -40,6 +45,7 @@ export function ReceiveInventory() {
     const [residents, setResidents] = useState({})
 
     const dataFetchStatus = useContext(StaffAppContext)
+    const addToast = useContext(ToastContext)
 
     useEffect(() => {
         dataFetchStatus?.resDir &&
@@ -64,12 +70,13 @@ export function ReceiveInventory() {
 
         setRemoveRow(null)
     }, [removeRow])
-
+    
     function submitForm() {
         submitEntries(form, (clearForm: boolean) => {
-            if (clearForm) {
-                setForm([])
-            }
+            if (!clearForm) return
+
+            setForm([EMPTY_ROW])
+            addToast({ title: '👍 Submitted', message: 'The items are recorded successfully.' })
         })
     }
 
@@ -145,7 +152,7 @@ function FormRow(props: { row: number, data: Array<any>, residents: {}, updateHa
             </button>
         }
         <datalist id={resNamesDatalistId}>
-            {datalistOptions?.map(o => <option value={o} />)}
+            {datalistOptions.map(o => <option value={o} />)}
         </datalist>
     </>
 }

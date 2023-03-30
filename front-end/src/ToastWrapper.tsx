@@ -15,12 +15,13 @@ export function ToastWrapper(props: HTMLAttributes<HTMLDivElement> & { offset?: 
         position: 'absolute',
         bottom: containerOffset,
         right: containerOffset,
+        maxWidth: '300px'
     };
 
     return <ToastContext.Provider value={addToast}>
         <div {...props}>
             {props.children}
-            <div className='grid' style={toastWrapperStyle}>
+            <div className='grid gap-1' style={toastWrapperStyle}>
                 {toasts.map((t, i) => <ToastCard
                     dismissTrigger={() => dismissToast(i)}
                     message={t.message}
