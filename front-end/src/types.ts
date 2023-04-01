@@ -18,7 +18,8 @@ export type ItemRecord = {
     lastAt: string,
     lastUpdate: number,
     owner: string,
-    note: string
+    note: string,
+    id: number
 }
 
 export type ItemLog = Array<{ ts: number, to: string, by: string }>

@@ -1,6 +1,9 @@
-from sqlalchemy import create_engine, insert, text, select, table, column, func
+from sqlalchemy import create_engine, insert, select, table, column, func, Column, Integer, String
+from sqlalchemy.orm import Session, declarative_base
+from sqlalchemy.dialects.postgresql import JSONB
+
 from pandas import DataFrame, read_sql_query
-from utils import debug_print, has_all_fields
+from utils import debug_print, has_all_fields, verify_jwt_token
 import time
 import json
 
@@ -37,7 +40,7 @@ inventory_table = table('inventory', column("type"), column('owner_bld'), column
     "received"))
 
 
-def add_inventory(payload: Optional[AddInventoryPayload], receiver_id: int):
+def add_inventory(payload: Optional[AddInventoryPayload], staff_id: int):
     try:
         if payload == None:
             raise Exception('No Payload')
@@ -48,9 +51,9 @@ def add_inventory(payload: Optional[AddInventoryPayload], receiver_id: int):
                 item_type, bld, unit, name, location, note = tuple(row)
                 now = int(time.time())
                 log = json.dumps(
-                    [{"by": receiver_id, "to": location, "ts": now}])
+                    [{"by": staff_id, "to": location, "ts": now}])
                 entries.append([
-                    item_type, bld, unit, name, log, note, 'w', receiver_id, func.now()])
+                    item_type, bld, unit, name, log, note, 'w', staff_id, func.now()])
             query = inventory_table.insert().values(entries)
 
             db.execute(query)
@@ -68,8 +71,9 @@ def query_inventory(query_json: Optional[InventoryQueryPayload]):
         inventory_result = table('inventory', column('type'),  column('owner_bld'), column('owner_unit'), column(
             'owner_name'), column("note"), column("status"), column("status"), column('log'), column('id'))
         query = select(inventory_result).where(
-            func.lower(column('owner_bld')) == func.lower(query_json['bld']) and
-            func.lower(column('owner_unit') == func.lower(query_json['unit']))
+            (func.lower(column('owner_bld')) == func.lower(query_json['bld'])) &
+            (func.lower(column('owner_unit'))
+             == func.lower(query_json['unit']))
         )
 
         debug_print(
@@ -110,6 +114,7 @@ def query_resident(query_json: Optional[dict[str, str]]):
         df = read_sql_query(query, db)
         return df.to_json(orient='split')
 
+
 def get_all_residents():
     with engine.connect() as db:
         id_results = table("identity", column("name"), column("bld"),
@@ -117,3 +122,43 @@ def get_all_residents():
         df = read_sql_query(select(id_results), db)
 
         return df.to_json(orient='split')
+
+
+def submit_inventory_collection(payload: Optional[dict], staff_id: int):
+    if payload == None:
+        return 'No payload', 400
+    base = declarative_base()
+
+    class Inventory(base):
+        __tablename__ = "inventory"
+        id = Column(Integer, primary_key=True)
+        status = Column(String)
+        log = Column(JSONB)
+
+    verified, data = verify_jwt_token(payload.get('recipientJWT'))
+    if not verified:
+        collected_by = 'Unverified collection'
+    else:
+        collected_by = 'Verfied collection: ' + data.get('sub')  # type: ignore
+
+    new_log_entry = {
+        "by": staff_id,
+        "to": f"{collected_by}",
+        "ts": int(time.time())
+    }
+
+    with Session(engine) as session:
+        matching_inventory_rows = session.query(
+            Inventory).filter(Inventory.id.in_(payload['collected'])).all()
+
+        # Update each inventory row with log entry and "c" status
+        for row in matching_inventory_rows:
+            row.status = 'c'  # type: ignore
+            row.log = [new_log_entry] + row.log  # type: ignore
+
+        session.commit()
+
+        if len(matching_inventory_rows) != 0:
+            return f"{len(matching_inventory_rows)} items marked as collected", 200
+        else:
+            return "No items updated", 400

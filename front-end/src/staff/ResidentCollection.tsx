@@ -1,38 +1,54 @@
-import React, { CSSProperties, useEffect, useRef, useState } from 'react';
+import React, { CSSProperties, useContext, useEffect, useRef, useState } from 'react';
 import { DatabaseService } from '../common/api';
 import { getAuthInfo } from '../common/getAuthState';
 import { QRReader } from '../common/qr';
 import { qrChangeHandler } from '../common/qrChangeHandler';
-import { AuthTokenPayload, QueryableKV, QueryResult, LocalStorageKey, ItemRecord } from '../types';
+import { AuthTokenPayload, QueryResult, LocalStorageKey, ItemRecord } from '../types';
 import { getSiteConfig, ConfigKey } from '../common/util';
 import { BuildingAndUnitInput } from '../common/Components/BuildingAndUnitInput';
+import { ToastContext } from '../ToastWrapper';
 
 export function ResidentCollection() {
-    const [authenticatedResident, setAuthenticatedResident] = useState({} as AuthTokenPayload);
+    const [authenticatedResident, setAuthenticatedResident] = useState<AuthTokenPayload>(null);
     const [qrErrorMsg, setQrErrorMsg] = useState(null);
     const [confirmSkip, setConfirmSkip] = useState(false)
     const [authSkipped, setAuthSkipped] = useState(false)
     const [form, setForm] = useState([getSiteConfig(ConfigKey.AvailableBuildings)[0].value, null])
+    const residentJWT = useRef(null)
 
-    const codeHandler = (code: string) => qrChangeHandler(code, () => { }, setAuthenticatedResident, setQrErrorMsg);
+    const codeHandler = (code: string) => {
+        residentJWT.current = code
+        qrChangeHandler(code, () => { }, setAuthenticatedResident, setQrErrorMsg);
+    }
+    const resetForm = () => {
+        setAuthenticatedResident(null);
+        setAuthSkipped(false);
+        setConfirmSkip(false)
+        setForm([getSiteConfig(ConfigKey.AvailableBuildings)[0].value, null])
+        residentJWT.current = null
+    }
 
     const queryByBuildingAndUnit = () => {
         setAuthenticatedResident({ ...getAuthInfo(), bld: form[0], unit: form[1] })
     }
 
-    if (authenticatedResident.name) {
+    if (authenticatedResident?.name) {
         return <>
             {authSkipped
                 ? <b className='padding-1'>⚠️ Checking out as {getAuthInfo().name}</b>
                 : <AuthenticatedResidentBadge resident={authenticatedResident} />}
-            <InventoryResults query={{ bld: authenticatedResident.bld, unit: authenticatedResident.unit }} />
+            <InventoryResults
+                query={{ bld: authenticatedResident.bld, unit: authenticatedResident.unit }}
+                residentJWT={residentJWT.current}
+                resetForm={resetForm}
+            />
         </>
     }
 
     if (authSkipped) {
         return <>
             <div className='grid gap-1 padding-1' style={{ gridTemplateColumns: 'max-content 1fr', alignItems: 'center' }}>
-                <BuildingAndUnitInput form={form} setForm={setForm}/>
+                <BuildingAndUnitInput form={form} setForm={setForm} />
             </div>
             <button disabled={form.some(field => field === null)} onClick={queryByBuildingAndUnit} style={{ margin: '1rem' }}>
                 Show available items
@@ -79,11 +95,20 @@ function AuthenticatedResidentBadge(props: { resident: AuthTokenPayload }) {
     </div>
 }
 
-type InventoryResultsProps = { query: Partial<AuthTokenPayload> }
+type InventoryResultsProps = {
+    query: Partial<AuthTokenPayload>,
+    residentJWT: string,
+    resetForm: () => void
+}
 function InventoryResults(props: InventoryResultsProps) {
     const [queryResults, setQueryResults] = useState(null as QueryResult)
+    const [isSubmitting, setIsSubmitting] = useState(false)
     const [statusMsg, setStatusMsg] = useState<string | JSX.Element>('⏳ Waiting for resident token')
+
+    const addToast = useContext(ToastContext)
     const collected = useRef<Array<boolean>>([])
+
+    const staffJWTToken = localStorage.getItem(LocalStorageKey.JWT)
 
     const isRetrievingMsg = <div className='flex-centre gap-1'>
         <div className='spinner' style={{ height: '1.5rem', width: '1.5rem' }}></div>
@@ -95,7 +120,6 @@ function InventoryResults(props: InventoryResultsProps) {
         if (!props.query) return
         setStatusMsg(isRetrievingMsg)
 
-        const staffJWTToken = localStorage.getItem(LocalStorageKey.JWT)
         DatabaseService.queryInventory(props.query, staffJWTToken)
             .then(r => {
                 if (r.length == 0) {
@@ -104,7 +128,7 @@ function InventoryResults(props: InventoryResultsProps) {
                     setQueryResults(r)
                     setStatusMsg(<div className='flex-centre gap-1'>
                         Click on items collected by resident
-                        <button>Done</button>
+                        <button onClick={() => setIsSubmitting(true)}>Done</button>
                     </div>)
                     collected.current = r.map(r => false)
                 }
@@ -115,6 +139,31 @@ function InventoryResults(props: InventoryResultsProps) {
                 </div>)
             })
     }, [])
+
+    useEffect(() => {
+        if (!isSubmitting) return
+
+        const collectedIds = queryResults.reduce((acc, item, i) => {
+            collected.current[i] && acc.push(item.id);
+            return acc
+        }, [])
+
+        DatabaseService.submitInventoryCollection(collectedIds, props.residentJWT, staffJWTToken)
+            .then(async result => {
+                if (result.success) {
+                    addToast({
+                        title: '👍 Successed',
+                        message: 'The packages are marked as collected.'
+                    })
+                    props.resetForm()
+                } else {
+                    addToast({
+                        title: '🤖 *blip boop*',
+                        message: `Something went wrong.\nStatus: ${result.res.status}\nMessage: ${await result.res.text()}`
+                    })
+                }
+            })
+    }, [isSubmitting])
 
     const cardGridStyle: CSSProperties = {
         width: '100vw',

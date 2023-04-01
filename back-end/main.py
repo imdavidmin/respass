@@ -1,6 +1,6 @@
 from typing import Optional
-from db import add_inventory, get_all_residents, query_inventory, new_resident, query_resident
-from utils import get_signed_jwt, verify_jwt_token
+from db import add_inventory, get_all_residents, query_inventory, new_resident, query_resident, submit_inventory_collection
+from utils import get_bearer_token, get_jwt_id, get_signed_jwt, verify_jwt_token
 from flask import Flask, request, Request
 from flask_cors import CORS
 from os import environ
@@ -10,7 +10,7 @@ CORS(app)
 
 not_handled_response = 'No service on this path', 404
 valid_routes = {
-    'db': ['addInventory', 'addResident', 'getAllResidents', 'inventoryQuery', 'queryResident'],
+    'db': ['addInventory', 'addResident', 'getAllResidents', 'inventoryQuery', 'queryResident', 'submitInventoryCollection'],
     'jwt': ['getSignedJWT']
 }
 
@@ -65,7 +65,13 @@ def db_routing(path):
     elif path == 'queryResident':
         res = query_resident(request.json)
         return res, {'content-type': 'application/json'}
-    
+    elif path == 'submitInventoryCollection':
+        staff_id = get_jwt_id(request)
+        if staff_id == None: 
+            return 'Cannot read staff ID from JWT'
+        res = submit_inventory_collection(request.json, int(staff_id))
+        return res
+
     return not_handled_response
 
 
@@ -77,13 +83,6 @@ def jwt_routing(path):
         else:
             return res, 400
     return not_handled_response
-
-
-def get_bearer_token(auth: Optional[str]):
-    if not auth or not auth.startswith('Bearer '):
-        return None
-    return auth.replace('Bearer ', '')
-
 
 def is_post_json(req: Request):
     return req.is_json and req.method == 'POST'

@@ -26,7 +26,8 @@ export const DatabaseService = {
                     receiver: fields[indexes['receiver']],
                     lastAt: log[0].to,
                     lastUpdate: log[0].ts,
-                    note: fields[indexes['note']]
+                    note: fields[indexes['note']],
+                    id: fields[indexes['id']]
                 }
                 return record
             })
@@ -66,7 +67,14 @@ export const DatabaseService = {
     },
     async addInventory(form: InventoryReceiptForm, token: string) {
         const res = await fetchJsonPost(ENV.api.db.addInventory, form, token)
-        return res.ok ? { success: true } : { success: false, res: null }
+        return res.ok ? { success: true } : { success: false, res: res }
+    },
+    async submitInventoryCollection(collectedIds: Array<number>, residentJWT: string, token: string) {
+        const res = await fetchJsonPost(ENV.api.db.submitInventoryCollection, {
+            collected: collectedIds,
+            residentJWT: residentJWT,
+        }, token)
+        return res.ok ? { success: true } : { success: false, res: res }
     }
 }
 

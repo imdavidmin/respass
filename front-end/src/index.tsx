@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { createContext, useState } from 'react'
 import { createRoot } from 'react-dom/client';
 import { getAuthState } from './common/getAuthState';
 import { LoginQRScreen } from './LoginQRScreen';
@@ -11,7 +11,7 @@ MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEt98y6jlP8awFC3/D3CwrCub4x9oY
 6oyDYLhkpTmVyGyESS/f0DBhBQhj1BzIw5JIPsJ0qJv61pTibCL1O/oCMw==
 -----END PUBLIC KEY-----`
 
-
+export const AuthContext = createContext<() => void>(null)
 
 function App() {
     const [authState, setAuthState] = useState(getAuthState())
@@ -26,10 +26,17 @@ function App() {
         }
     }
 
+    function logout() {
+        localStorage.clear()
+        setAuthState(0)
+    }
+
     return (
-        <ToastWrapper className='grid-centre gap-1 fill-vp-width' style={{ padding: "0 2rem" }}>
-            {getUI()}
-        </ToastWrapper>
+        <AuthContext.Provider value={logout}>
+            <ToastWrapper className='grid-centre gap-1 fill-vp-width' style={{ padding: "0 2rem" }}>
+                {getUI()}
+            </ToastWrapper>
+        </AuthContext.Provider>
     )
 }
 
