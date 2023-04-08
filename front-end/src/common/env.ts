@@ -6,6 +6,7 @@ export const ENV = {
             addResident: `${API_ROOT}/db/addResident`,
             deleteResident: `${API_ROOT}/db/deleteResident`,
             getAllResidents: `${API_ROOT}/db/getAllResidents`,
+            getResidentContact: `${API_ROOT}/db/getResidentContact`,
             queryInventory: `${API_ROOT}/db/inventoryQuery`,
             queryResident: `${API_ROOT}/db/queryResident`,
             submitInventoryCollection: `${API_ROOT}/db/submitInventoryCollection`,

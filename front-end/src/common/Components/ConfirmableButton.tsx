@@ -1,6 +1,6 @@
-import React, { CSSProperties, HTMLAttributes, useRef, useState } from 'react';
+import React, { ButtonHTMLAttributes, CSSProperties, useRef, useState } from 'react';
 
-export function ConfirmableButton(props: { onConfirm: () => void; disabled: boolean } & HTMLAttributes<HTMLButtonElement>) {
+export function ConfirmableButton(props: { onConfirm: () => void } & ButtonHTMLAttributes<HTMLButtonElement>) {
     const [confirming, setConfirming] = useState(false);
     const timer = useRef(null);
     const handleClick = () => {
@@ -23,7 +23,10 @@ export function ConfirmableButton(props: { onConfirm: () => void; disabled: bool
     };
     const confirmBanner = <div style={bannerStyle}>Confirm?</div>;
 
-    return <button {...props} onClick={handleClick} style={{ ...props.style, position: 'relative' }}>
+    const btnProps = {...props}
+    delete btnProps['onConfirm']
+
+    return <button {...btnProps} onClick={handleClick} style={{ ...props.style, position: 'relative' }}>
         {confirming && confirmBanner}
         {props.children}
     </button>;

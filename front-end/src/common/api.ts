@@ -1,6 +1,7 @@
 //@ts-nocheck
 
 import { InventoryReceiptForm } from "../staff/ReceiveItems"
+import { ResidentData } from "../staff/ResidentManagement/ResidentInformationForm"
 import { AuthTokenPayload, ItemLog, ItemRecord, QueryableKV, QueryResult, ResidentDirectory } from "../types"
 import { ENV } from "./env"
 import { fetchJsonPost, isOkayJSON } from './util'
@@ -10,18 +11,19 @@ export const DatabaseService = {
         const res = await fetchJsonPost(ENV.api.db.addInventory, form, token)
         return res.ok ? { success: true } : { success: false, res: res }
     },
-    async addResident(kv: { [k: string]: string }, token): Promise<DatabaseService.Response.AddResident> {
+    async addResident(kv: ResidentData, token: string): Promise<DatabaseService.Response.AddResident> {
         const res = await fetchJsonPost(ENV.api.db.addResident, kv, token)
         if (!res.ok) return null
         const id = Number.parseInt(await res.text())
         return Number.isInteger(id) ? id : null
     },
-    async deleteResident(id: string) {
-        const res = await fetch(`${ENV.api.db.deleteResident}?id=${id}`)
+    async deleteResident(id: string, token: stirng): Promise<boolean> {
+        const res = await fetch(`${ENV.api.db.deleteResident}?id=${id}`, { headers: { Authorization: `Bearer ${token}` } })
         if (res.ok) return true
     },
-    async updateResident() {
-
+    async updateResident(form: ResidentData, id: string, token: string): Promise<boolean> {
+        const res = await fetchJsonPost(`${ENV.api.db.updateResident}?id=${id}`, form, token)
+        if (res.ok) return true
     },
     async getAllResidents(token: string): Promise<ResidentDirectory> {
         const res = await fetch(ENV.api.db.getAllResidents, {
@@ -43,6 +45,16 @@ export const DatabaseService = {
             result[bld][unit].push([name, id])
         })
         return result
+    },
+    async getResidentContact(id: string, token: string) {
+        const res = await fetch(`${ENV.api.db.getResidentContact}?id=${id}`, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        })
+        if (isOkayJSON(res)) {
+            return await res.json()
+        }
     },
     async queryInventory(queryKV: Partial<AuthTokenPayload>, token: string): Promise<QueryResult | null> {
         const res = await fetchJsonPost(ENV.api.db.queryInventory, queryKV, token)

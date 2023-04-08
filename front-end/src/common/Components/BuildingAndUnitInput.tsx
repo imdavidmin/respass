@@ -10,13 +10,15 @@ export function BuildingAndUnitInput(props: { form: Array<string>; setForm: (f: 
     };
 
     useEffect(() => {
-        props.setForm([buildingData[0].value, null]);
+        !props.form[0] &&
+            props.setForm([buildingData[0].value, props.form[1]]);
     }, [])
 
     return <>
         <label>{FieldLabel.Building}</label>
         <select disabled={props.locked} value={props.form[0] ?? ''} onChange={(e) => updateForm(0, e)}>
-            {buildingData?.map(b => <option value={b.value}>{b.label ?? b.value}</option>
+            {buildingData?.map((b, i) =>
+                <option value={b.value} key={i}>{b.label ?? b.value}</option>
             )}
         </select>
         <label>{FieldLabel.Unit}</label>
