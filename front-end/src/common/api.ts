@@ -6,6 +6,44 @@ import { ENV } from "./env"
 import { fetchJsonPost, isOkayJSON } from './util'
 
 export const DatabaseService = {
+    async addInventory(form: InventoryReceiptForm, token: string) {
+        const res = await fetchJsonPost(ENV.api.db.addInventory, form, token)
+        return res.ok ? { success: true } : { success: false, res: res }
+    },
+    async addResident(kv: { [k: string]: string }, token): Promise<DatabaseService.Response.AddResident> {
+        const res = await fetchJsonPost(ENV.api.db.addResident, kv, token)
+        if (!res.ok) return null
+        const id = Number.parseInt(await res.text())
+        return Number.isInteger(id) ? id : null
+    },
+    async deleteResident(id: string) {
+        const res = await fetch(`${ENV.api.db.deleteResident}?id=${id}`)
+        if (res.ok) return true
+    },
+    async updateResident() {
+
+    },
+    async getAllResidents(token: string): Promise<ResidentDirectory> {
+        const res = await fetch(ENV.api.db.getAllResidents, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        })
+        const result: ResidentDirectory = {}
+
+        if (!res.ok || !res.headers.get('content-type')?.includes('application/json')) return result
+        const data: DatabaseService.Response.GetAllResidents = await res.json()
+
+        const fields = ['name', 'bld', 'unit', 'id']
+        const [nameIndex, buildingIndex, unitIndex, idIndex] = fields.map(f => data.columns.indexOf(f))
+        data.data.forEach(row => {
+            const [bld, unit, name, id]: Array<string> = [row[buildingIndex], row[unitIndex], row[nameIndex], row[idIndex]]
+            result[bld] ??= {}
+            result[bld][unit] ??= []
+            result[bld][unit].push([name, id])
+        })
+        return result
+    },
     async queryInventory(queryKV: Partial<AuthTokenPayload>, token: string): Promise<QueryResult | null> {
         const res = await fetchJsonPost(ENV.api.db.queryInventory, queryKV, token)
         if (!isOkayJSON(res)) return null
@@ -38,37 +76,6 @@ export const DatabaseService = {
         const res = await fetchJsonPost(ENV.api.db.queryResident, kv, token)
         return isOkayJSON(res) ? await res.json() : null
     },
-    async addResident(kv: { [k: string]: string }, token): Promise<DatabaseService.Response.AddResident> {
-        const res = await fetchJsonPost(ENV.api.db.addResident, kv, token)
-        if (!res.ok) return null
-        const id = Number.parseInt(await res.text())
-        return Number.isInteger(id) ? id : null
-    },
-    async getAllResidents(token: string): Promise<ResidentDirectory> {
-        const res = await fetch(ENV.api.db.getAllResidents, {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
-        })
-        const result: ResidentDirectory = {}
-
-        if (!res.ok || !res.headers.get('content-type')?.includes('application/json')) return result
-        const data: DatabaseService.Response.GetAllResidents = await res.json()
-
-        const fields = ['name', 'bld', 'unit', 'id']
-        const [nameIndex, buildingIndex, unitIndex, idIndex] = fields.map(f => data.columns.indexOf(f))
-        data.data.forEach(row => {
-            const [bld, unit, name, id]: Array<string> = [row[buildingIndex], row[unitIndex], row[nameIndex], row[idIndex]]
-            result[bld] ??= {}
-            result[bld][unit] ??= []
-            result[bld][unit].push([name, id])
-        })
-        return result
-    },
-    async addInventory(form: InventoryReceiptForm, token: string) {
-        const res = await fetchJsonPost(ENV.api.db.addInventory, form, token)
-        return res.ok ? { success: true } : { success: false, res: res }
-    },
     async submitInventoryCollection(collectedIds: Array<number>, residentJWT: string, token: string) {
         const res = await fetchJsonPost(ENV.api.db.submitInventoryCollection, {
             collected: collectedIds,
@@ -79,8 +86,8 @@ export const DatabaseService = {
 }
 
 export const JWTService = {
-    async getJWT(payload: { [k: string]: any }, token): Promise<string> {
-        const res = await fetchJsonPost(ENV.api.jwt.getSignedJWT, payload, token)
+    async getJWT(payload: { [k: string]: any }, token: string, sendEmail?: boolean): Promise<string> {
+        const res = await fetchJsonPost(`${ENV.api.jwt.getSignedJWT}${sendEmail ? '?sendToEmail=true' : ''}`, payload, token)
         return res.ok ? await res.text() : null
     }
 }

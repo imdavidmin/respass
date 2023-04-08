@@ -5,7 +5,7 @@ import { ToastContext } from '../ToastWrapper';
 import { LocalStorageKey } from '../types';
 import { ReceiveInventory } from './ReceiveItems';
 import { ResidentCollection } from './ResidentCollection';
-import { ResidentManagement } from './ResidentManagement';
+import { ResidentManagement } from './ResidentManagement/';
 
 export type NavOption = { id: string, label: string, element: JSX.Element }
 export const StaffAppContext = createContext(null)

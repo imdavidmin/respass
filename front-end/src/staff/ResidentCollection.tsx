@@ -13,7 +13,7 @@ export function ResidentCollection() {
     const [qrErrorMsg, setQrErrorMsg] = useState(null);
     const [confirmSkip, setConfirmSkip] = useState(false)
     const [authSkipped, setAuthSkipped] = useState(false)
-    const [form, setForm] = useState([getSiteConfig(ConfigKey.AvailableBuildings)[0].value, null])
+    const [form, setForm] = useState([getSiteConfig(ConfigKey.AvailableBuildings)[0]?.value, null])
     const residentJWT = useRef(null)
 
     const codeHandler = (code: string) => {
@@ -159,7 +159,8 @@ function InventoryResults(props: InventoryResultsProps) {
                 } else {
                     addToast({
                         title: '🤖 *blip boop*',
-                        message: `Something went wrong.\nStatus: ${result.res.status}\nMessage: ${await result.res.text()}`
+                        message: `Something went wrong.\nStatus: ${result.res.status}\nMessage: ${await result.res.text()}`,
+                        barStyle: { background: '#df8000' }
                     })
                 }
             })

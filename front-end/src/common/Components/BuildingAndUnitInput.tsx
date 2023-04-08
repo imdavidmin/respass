@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { FieldLabel } from '../../staff/TokenIssuance';
+import { FieldLabel } from '../../staff/ResidentManagement/TokenIssuance';
 import { getSiteConfig, ConfigKey } from '../util';
 
 export function BuildingAndUnitInput(props: { form: Array<string>; setForm: (f: Array<string>) => void; locked?: boolean }) {

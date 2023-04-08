@@ -1,5 +1,8 @@
 import React, { CSSProperties, useState } from 'react'
+import { CreateResident } from './CreateResident'
 import { TokenIssuance } from './TokenIssuance'
+import { ResidentLookup } from './ResidentLookup'
+import { RevokeToken } from './RevokeToken'
 
 export function ResidentManagement() {
     const [screen, setScreen] = useState(0)
@@ -17,7 +20,9 @@ export function ResidentManagement() {
 
     const labels = {
         1: 'Token Issuance',
-        2: 'Resident Records'
+        2: 'Revoke Token',
+        3: 'Resident Lookup',
+        4: 'Create New Resident'
     }
 
     function getScreen() {
@@ -27,17 +32,22 @@ export function ResidentManagement() {
                     <h2 style={{ margin: 0 }}>Access</h2>
                     <div className='grid gap-1'>
                         <button onClick={() => setScreen(1)}>Issue ID Token</button>
+                        <button onClick={() => setScreen(2)}>Revoke ID Token</button>
                     </div>
-                    <h2 style={{ margin: 0 }}>Information</h2>
+                    <h2 style={{ margin: 0 }}>Records</h2>
                     <div className='grid gap-1'>
-                        <button onClick={() => setScreen(2)}>Manage Resident Records</button>
+                        <button onClick={() => setScreen(3)}>Lookup Resident</button>
+                        <button onClick={() => setScreen(4)}>Create New Resident</button>
                     </div>
-
                 </div>
             case 1:
                 return <TokenIssuance />
             case 2:
-                return <></>
+                return <RevokeToken />
+            case 3:
+                return <ResidentLookup />
+            case 4:
+                return <CreateResident />
         }
     }
     return <>

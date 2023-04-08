@@ -30,8 +30,12 @@ export enum ConfigKey {
 export function getSiteConfig(key: ConfigKey) {
     const data: SiteConfig = JSON.parse(localStorage.getItem(LocalStorageKey.SiteConfig))
     switch (key) {
-        case ConfigKey.AvailableBuildings: return data.BUILDINGS
-        case ConfigKey.InventoryLocations: return data.INVENTORY_LOCATIONS
-        case ConfigKey.InventoryObjectTypes: return data.OBJECT_TYPES
+        case ConfigKey.AvailableBuildings: return data?.BUILDINGS ?? []
+        case ConfigKey.InventoryLocations: return data?.INVENTORY_LOCATIONS ?? []
+        case ConfigKey.InventoryObjectTypes: return data?.OBJECT_TYPES ?? []
     }
+}
+
+export async function getResidentDirectory(){
+    return JSON.parse(localStorage.getItem(LocalStorageKey.ResidentDirectory))
 }
