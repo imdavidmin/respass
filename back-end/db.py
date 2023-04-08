@@ -1,5 +1,5 @@
 from requests import HTTPError, JSONDecodeError
-from sqlalchemy import create_engine, insert, update, select, table, column, delete, func, Column, Integer, String
+from sqlalchemy import create_engine, insert, update, select, table, column, delete, func, Column, Integer, String, tuple_
 from sqlalchemy.orm import Session, declarative_base
 from sqlalchemy.dialects.postgresql import JSONB
 from pandas import DataFrame, read_sql_query
@@ -53,20 +53,56 @@ def add_inventory(payload: Optional[AddInventoryPayload], staff_id: int):
         if payload == None:
             raise Exception('No Payload')
 
+        notify_list = []
         with engine.connect() as db:
+            # Add each item received into the inventory table
             entries = []
             for row in payload:
                 item_type, bld, unit, name, location, note = tuple(row)
+                notify_list.append((name, bld, unit))
                 now = int(time.time())
                 log = json.dumps(
                     [{"by": staff_id, "to": location, "ts": now}])
                 entries.append([
                     item_type, bld, unit, name, log, note, 'w', staff_id, func.now()])
-            query = inventory_table.insert().values(entries)
 
+            query = inventory_table.insert().values(entries)
             db.execute(query)
             db.commit()
-        return '', 200
+
+            # Find all registered IDs
+            id_match_query = select(id_table).where(
+                tuple_(id_table.c.name, id_table.c.bld,
+                       id_table.c.unit)
+                .in_(notify_list)
+            )
+            res = db.execute(id_match_query).fetchall()
+
+            # Notify those recorded in the system that match the recipient details
+            notify_ids = [str(id) for (n, b, u, id, r) in res]
+            knock = Knock(environ['KNOCK_SECRET_KEY'])
+            knock.workflows.trigger(
+                key=environ['KNOCK_WORKFLOW_PARCEL_NOTIFICATION'],
+                recipients=notify_ids
+            )
+
+            # Notify primary contact of a unit if the package name is not matched to a registered resident
+            no_match: list[tuple[str, str, str]] = [entry for entry in notify_list
+                                                    if entry not in [(n, b, u) for (n, b, u, id, r) in res]]
+            no_match_query = select(id_table.c.id) \
+                .where(tuple_(id_table.c.bld, id_table.c.unit)
+                       .in_([(b, u) for (n, b, u) in no_match])) \
+                .distinct(id_table.c.bld, id_table.c.unit)
+            alt_notify_ids = [str(row[0])
+                              for row in db.execute(no_match_query).fetchall()]
+            for i in range(len(alt_notify_ids)):
+                knock.workflows.trigger(
+                    key=environ['KNOCK_WORKFLOW_PARCEL_NO_MATCH'],
+                    recipients=[alt_notify_ids[i]],
+                    data={"parcelRecipient": no_match[i][0]}
+                )
+
+        return {"notified": notify_ids, "notMatched": alt_notify_ids}, 200
     except Exception as e:
         return str(e), 400
 
@@ -135,7 +171,7 @@ def get_resident_contact(id: str):
         knockResp: dict = knock.users.get(id)
         return {
             'email': knockResp.get('email'),
-            'phone': knockResp.get('phone'),
+            'phone': knockResp.get('phone_number'),
             'id': knockResp.get('id')
         }
     except HTTPError as e:
