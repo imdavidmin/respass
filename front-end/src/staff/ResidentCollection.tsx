@@ -6,7 +6,7 @@ import { qrChangeHandler } from '../common/qrChangeHandler';
 import { AuthTokenPayload, QueryResult, LocalStorageKey, ItemRecord } from '../types';
 import { getSiteConfig, ConfigKey } from '../common/util';
 import { BuildingAndUnitInput } from '../common/Components/BuildingAndUnitInput';
-import { ToastContext } from '../ToastWrapper';
+import { FailureToast, ToastContext } from '../ToastWrapper';
 
 export function ResidentCollection() {
     const [authenticatedResident, setAuthenticatedResident] = useState<AuthTokenPayload>(null);
@@ -157,11 +157,7 @@ function InventoryResults(props: InventoryResultsProps) {
                     })
                     props.resetForm()
                 } else {
-                    addToast({
-                        title: '🤖 *blip boop*',
-                        message: `Something went wrong.\nStatus: ${result.res.status}\nMessage: ${await result.res.text()}`,
-                        barStyle: { background: '#df8000' }
-                    })
+                    addToast(FailureToast(`Something went wrong.\nStatus: ${result.res.status}\nMessage: ${await result.res.text()}`))
                 }
             })
     }, [isSubmitting])

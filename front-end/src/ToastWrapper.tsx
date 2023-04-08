@@ -23,6 +23,7 @@ export function ToastWrapper(props: HTMLAttributes<HTMLDivElement> & { offset?: 
             {props.children}
             <div className='grid gap-1' style={toastWrapperStyle}>
                 {toasts.map((t, i) => <ToastCard
+                    key={i}
                     dismissTrigger={() => dismissToast(i)}
                     message={t.message}
                     title={t.title}
@@ -82,4 +83,13 @@ function ToastCard(props: ToastCardProps) {
             {props.message}
         </span>
     </div>;
+}
+
+export const FailureToast = (message: string | JSX.Element) => {
+    const info: ToastInfo = {
+        title: '🤖 *blip boop*',
+        barStyle: { background: '#df8000' },
+        message: message
+    }
+    return info
 }

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { DatabaseService } from '../common/api';
 import { NavMenu } from '../NavMenu';
-import { ToastContext } from '../ToastWrapper';
+import { FailureToast, ToastContext } from '../ToastWrapper';
 import { LocalStorageKey } from '../types';
 import { ReceiveInventory } from './ReceiveItems';
 import { ResidentCollection } from './ResidentCollection';
@@ -23,18 +23,15 @@ export function StaffApp() {
     useEffect(() => {
         DatabaseService.getAllResidents(localStorage.getItem(LocalStorageKey.JWT))
             .then(r => localStorage.setItem(LocalStorageKey.ResidentDirectory, JSON.stringify(r)))
-            .catch((r: Error) => addToast({
-                title: `🤖 *blip boop*`,
-                message: <div className='grid gap-1'>
+            .catch((r: Error) => addToast(
+                FailureToast(<div className='grid gap-1'>
                     Unable to fetch resident data.
                     {r.name &&
                         <span style={{ opacity: 0.8, fontSize: '0.8rem' }}>
                             {`${r.name}: ${r.message}`}
                         </span>
                     }
-                </div>,
-                barStyle: { background: '#df8000' }
-            }))
+                </div>)))
             .finally(() => setDataFetch({ resDir: true }))
     }, [])
 
