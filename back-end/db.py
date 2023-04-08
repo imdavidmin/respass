@@ -1,9 +1,11 @@
-from sqlalchemy import create_engine, insert, select, table, column, func, Column, Integer, String
+from requests import HTTPError
+from sqlalchemy import create_engine, insert, select, table, column, delete, func, Column, Integer, String
 from sqlalchemy.orm import Session, declarative_base
 from sqlalchemy.dialects.postgresql import JSONB
-
 from pandas import DataFrame, read_sql_query
-from utils import debug_print, has_all_fields, verify_jwt_token
+
+from knockapi import Knock
+from utils import debug_print, e164_phone, has_all_fields, verify_jwt_token
 import time
 import json
 
@@ -24,11 +26,17 @@ InventoryQueryPayload = TypedDict('InventoryQueryPayload', {
     'name': Optional[list[str]],
     'id': Optional[list[str]]
 })
-ResidentQueryPayload = TypedDict('ResidentQueryPayload', {
+NewResidentPayload = TypedDict('NewResidentPayload', {
     'name': str,
     'bld': str,
     'unit': str,
-    'role': NotRequired[str]
+    'role': NotRequired[str],
+    'email': NotRequired[str],
+    'phone': NotRequired[str]
+})
+ResidentQueryPayload = TypedDict('ResidentQueryPayload', {
+    'bld': NotRequired[str],
+    'unit': NotRequired[str]
 })
 
 AddInventoryPayload = list[list[str]]
@@ -84,7 +92,7 @@ def query_inventory(query_json: Optional[InventoryQueryPayload]):
         return df.to_dict(orient='split'), 200
 
 
-def new_resident(query_json: Optional[ResidentQueryPayload]) -> str:
+def new_resident(query_json: Optional[NewResidentPayload]) -> str:
     required_fields = ['name', 'bld', 'unit']
     if query_json == None or not has_all_fields(dict(query_json), required_fields):
         raise ValueError('Query JSON cannot be None')
@@ -92,14 +100,31 @@ def new_resident(query_json: Optional[ResidentQueryPayload]) -> str:
     query_json['role'] = 'res'
 
     with engine.connect() as db:
-        query = insert(id_table).values(**query_json).returning(id_table.c.id)
+        query = insert(id_table) \
+            .values(bld=query_json['bld'], unit=query_json['unit'], name=query_json['name'], role='res') \
+            .returning(id_table.c.id)
         res = db.execute(query).fetchone()
 
         if res == None:
             raise ValueError('DB query did not return an ID')
+        id = str(res[0])
+
+        email, phone = query_json.get('email'), query_json.get('phone')
+        if phone: 
+            phone = e164_phone(phone)
+
+        if email or phone:
+            knock = Knock(api_key=environ['KNOCK_SECRET_KEY'])
+            knock.users.identify(
+                id=id,
+                data={
+                    "name": query_json.get('name'),
+                    "email": email,
+                    "phone_number": phone
+                })
 
         db.commit()
-        return str(res[0])
+        return id
 
 
 def query_resident(query_json: Optional[dict[str, str]]):
@@ -112,8 +137,24 @@ def query_resident(query_json: Optional[dict[str, str]]):
             query = query.where(func.lower(column(k)) == v.lower())
         print(query)
         df = read_sql_query(query, db)
+
+        print(df['id'].to_list())
         return df.to_json(orient='split')
 
+
+def delete_resident(id: int):
+    with engine.connect() as db:
+        query = delete(id_table).where(id_table.c.id == id)
+        db.execute(query)
+        db.commit()
+    
+    try: 
+        knock = Knock(environ['KNOCK_SECRET_KEY'])
+        knock.users.delete(id)
+    except HTTPError as e: 
+        pass
+
+    return ''
 
 def get_all_residents():
     with engine.connect() as db:
@@ -122,6 +163,16 @@ def get_all_residents():
         df = read_sql_query(select(id_results), db)
 
         return df.to_json(orient='split')
+
+
+def get_resident_contact(id: str):
+    knock = Knock(environ['KNOCK_SECRET_KEY'])
+    knockResp: dict = knock.users.get(id)
+    return {
+        'email': knockResp.get('email'),
+        'phone': knockResp.get('phone'),
+        'id': knockResp.get('id')
+    }
 
 
 def submit_inventory_collection(payload: Optional[dict], staff_id: int):

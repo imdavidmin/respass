@@ -1,8 +1,14 @@
+import base64
+import io
 from typing import Any, Optional
 import jwt
 from os import environ
 
 from flask import Request
+from knockapi import Knock
+
+import qrcode
+from qrcode.image.pure import PyPNGImage
 
 
 def extract_jwt_payload(jwt_string: str):
@@ -55,12 +61,42 @@ def debug_print(*args):
         print(*args)
 
 
-def get_signed_jwt(alg: str, payload: Optional[dict[str, Any]]) -> tuple[bool, str]:
+def get_signed_jwt(alg: str, payload: Optional[dict[str, Any]], send_qr_to_email: Optional[bool]) -> tuple[bool, str]:
     if payload == None:
         return False, 'Missing header or payload'
     else:
         try:
-            return True, jwt.encode(payload, environ['JWT_PRIVATE_KEY'], alg)
+            token = jwt.encode(payload, environ['JWT_PRIVATE_KEY'], alg)
+            if send_qr_to_email:
+                buf = io.BytesIO()
+                png = qrcode.QRCode(
+                    version=1,
+                    box_size=3,
+                    border=1,
+                )
+                png.add_data(token)
+                png.make()
+                png.make_image().save(buf)
+                png = base64.b64encode(buf.getvalue()).decode("utf-8")
+
+                knock = Knock(environ['KNOCK_SECRET_KEY'])
+                knock.notify(
+                    key=environ['KNOCK_WORKFLOW_NEW_QR'],
+                    recipients=[payload['sub']],
+                    data={
+                        "qrPNG": png,
+                        "attachments": [
+                            {"name": "QR Code.png",
+                             "content_type": "image/png",
+                             "content": png},
+                            {"name": 'Your Personal Code.txt',
+                             "content_type": "text/plain",
+                             "content": base64.b64encode(token.encode()).decode("utf-8")}
+                        ]
+                    }
+                )
+
+            return True, token
         except Exception as e:
             return False, str(e)
 
@@ -70,3 +106,12 @@ def has_all_fields(d: dict[str, Any], fields: list[str]):
         if d[x] == None:
             return False
     return True
+
+
+def e164_phone(phone: str):
+    if phone.startswith('00'):
+        return '+' + phone[2:]
+    elif phone.startswith('0'):
+        return '+44' + phone[1:]
+    else:
+        return phone

@@ -1,8 +1,10 @@
 flask
 flask_cors
+knockapi
 pandas
-sqlalchemy
 psycopg2-binary
-requests
 python-dotenv
 pyjwt[crypto]
+qrcode
+requests
+sqlalchemy
