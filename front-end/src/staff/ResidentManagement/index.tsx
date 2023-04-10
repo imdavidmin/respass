@@ -3,6 +3,7 @@ import { CreateResident } from './CreateResident'
 import { TokenIssuance } from './TokenIssuance'
 import { ResidentLookup } from './ResidentLookup'
 import { RevokeToken } from './RevokeToken'
+import { ErrorBoundary } from '../../common/Components/ErrorBoundary'
 
 export function ResidentManagement() {
     const [screen, setScreen] = useState(0)
@@ -59,6 +60,9 @@ export function ResidentManagement() {
                 <div className='centre-text' style={{ flexGrow: 1, fontSize: '1.25rem' }}>{labels[screen]}</div>
             </div>
         }
-        {getScreen()}
+        <ErrorBoundary>
+            {getScreen()}
+        </ErrorBoundary>
+
     </>
 }

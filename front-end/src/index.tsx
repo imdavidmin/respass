@@ -1,5 +1,6 @@
 import React, { createContext, useState } from 'react'
 import { createRoot } from 'react-dom/client';
+import { ErrorBoundary } from './common/Components/ErrorBoundary';
 import { getAuthState } from './common/getAuthState';
 import { LoginQRScreen } from './LoginQRScreen';
 import { ResidentApp } from './resident/ResidentApp';
@@ -34,7 +35,9 @@ function App() {
     return (
         <AuthContext.Provider value={logout}>
             <ToastWrapper className='grid-centre gap-1 fill-vp-width' style={{ padding: "0 2rem" }}>
-                {getUI()}
+                <ErrorBoundary>
+                    {getUI()}
+                </ErrorBoundary>
             </ToastWrapper>
         </AuthContext.Provider>
     )

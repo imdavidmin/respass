@@ -1,11 +1,11 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { LocalStorageKey, ResidentDirectory } from '../../types';
 import { DatabaseService } from '../../common/api';
 import { FailureToast, ToastContext } from '../../ToastWrapper';
 import { ConfigKey, getResidentDirectory, getSiteConfig } from '../../common/util';
 import { ResidentData, ResidentInformationForm } from './ResidentInformationForm';
 
-export const DEFAULT_FORM = [getSiteConfig(ConfigKey.AvailableBuildings)[0].value, null, null, null, null]
+export const DEFAULT_FORM = [null, null, null, null, null]
 
 export function CreateResident() {
     const formState = useState([...DEFAULT_FORM])

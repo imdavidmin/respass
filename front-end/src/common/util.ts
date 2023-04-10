@@ -1,4 +1,5 @@
 import { LocalStorageKey } from "../types"
+import { SiteConfig } from "./api"
 
 export const fetchJsonPost = (url: string | URL, payload, bearerToken?: string) => {
     const headers = {
@@ -15,12 +16,7 @@ export const fetchJsonPost = (url: string | URL, payload, bearerToken?: string) 
 
 export function isOkayJSON(r: Response) { return r.ok && r.headers.get('content-type')?.includes('application/json') }
 
-type ConfigData = Array<{ label?: string, value: string }>
-type SiteConfig = {
-    OBJECT_TYPES: ConfigData
-    INVENTORY_LOCATIONS: ConfigData
-    BUILDINGS: ConfigData
-}
+
 export enum ConfigKey {
     AvailableBuildings,
     InventoryObjectTypes,

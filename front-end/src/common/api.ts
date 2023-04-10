@@ -3,7 +3,7 @@
 import { InventoryReceiptForm } from "../staff/ReceiveItems"
 import { ResidentData } from "../staff/ResidentManagement/ResidentInformationForm"
 import { AuthTokenPayload, ItemLog, ItemRecord, QueryableKV, QueryResult, ResidentDirectory } from "../types"
-import { ENV } from "./env"
+import { ENV, PROP_ID } from "./env"
 import { fetchJsonPost, isOkayJSON } from './util'
 
 export const DatabaseService = {
@@ -104,6 +104,17 @@ export const JWTService = {
     }
 }
 
+export const KVService = {
+    async getSiteConfig(): Promise<SiteConfig> {
+        const res = await fetch(`${ENV.api.kv.getConfig}?prop=${PROP_ID}`)
+        if (isOkayJSON(res)) {
+            return await res.json()
+        } else {
+            return {}
+        }
+    }
+}
+
 export namespace DatabaseService {
     export namespace Response {
         type QueryResult = { columns: Array<string>, data: Array<Array<any>>, index: Array<number> }
@@ -112,4 +123,11 @@ export namespace DatabaseService {
         export type AddResident = number
         export type GetAllResidents = QueryResult
     }
+}
+
+type ConfigData = Array<{ label?: string, value: string }>
+export type SiteConfig = {
+    OBJECT_TYPES: ConfigData
+    INVENTORY_LOCATIONS: ConfigData
+    BUILDINGS: ConfigData
 }

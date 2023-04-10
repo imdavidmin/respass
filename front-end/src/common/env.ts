@@ -1,4 +1,6 @@
 const API_ROOT = 'https://respass-api.lansburysquare.com'
+export const PROP_ID = 'lansbury-square'
+
 export const ENV = {
     api: {
         db: {
@@ -14,6 +16,9 @@ export const ENV = {
         },
         jwt: {
             getSignedJWT: `${API_ROOT}/jwt/getSignedJWT`
+        },
+        kv: {
+            getConfig: `${API_ROOT}/kv/`
         }
     }
 }

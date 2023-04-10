@@ -1,0 +1,7 @@
+name = "respass-kv"
+main = "index.ts"
+compatibility_date = "2022-07-12"
+
+kv_namespaces = [
+    {binding = "RESPASS_KV", id = "ebaf1b33a3b64942a144fa73b9fafff0"}
+]
