@@ -88,10 +88,10 @@ export const DatabaseService = {
         const res = await fetchJsonPost(ENV.api.db.queryResident, kv, token)
         return isOkayJSON(res) ? await res.json() : null
     },
-    async submitInventoryCollection(collectedIds: Array<number>, residentJWT: string, token: string) {
+    async submitInventoryCollection(collectedIds: Array<number>, recipientJWT: string, token: string) {
         const res = await fetchJsonPost(ENV.api.db.submitInventoryCollection, {
             collected: collectedIds,
-            residentJWT: residentJWT,
+            reciipentJWT: recipientJWT,
         }, token)
         return res.ok ? { success: true } : { success: false, res: res }
     }

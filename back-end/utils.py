@@ -1,6 +1,6 @@
 import base64
 import io
-from typing import Any, Optional
+from typing import Any, Literal, Optional, Union
 import jwt
 from os import environ
 
@@ -8,7 +8,6 @@ from flask import Request
 from knockapi import Knock
 
 import qrcode
-from qrcode.image.pure import PyPNGImage
 
 
 def extract_jwt_payload(jwt_string: str):
@@ -33,7 +32,7 @@ def get_bearer_token(auth: Optional[str]):
     return auth.replace('Bearer ', '')
 
 
-def verify_jwt_token(jwt_string: Optional[str]):
+def verify_jwt_token(jwt_string: Optional[str], *allow_non_staff: bool) -> Union[tuple[Literal[False], str], tuple[Literal[True], dict]]:
     """\
     Verifies a ES256 JWT has a valid signature, with a PEM public key as an environment variable.
     """
@@ -45,7 +44,7 @@ def verify_jwt_token(jwt_string: Optional[str]):
     try:
         debug_print('Received JWT\n', jwt_string)
         data = extract_jwt_payload(jwt_string)
-        if data['role'] != 'staff':
+        if data['role'] != 'staff' and not allow_non_staff:
             return False, f'''A "staff" token is required, this token has "{data["role"]}"'''
         return True, data
     except jwt.InvalidSignatureError:

@@ -189,7 +189,7 @@ def submit_inventory_collection(payload: Optional[dict], staff_id: int):
         status = Column(String)
         log = Column(JSONB)
 
-    verified, data = verify_jwt_token(payload.get('recipientJWT'))
+    verified, data = verify_jwt_token(payload.get('recipientJWT'), True)
     if not verified:
         collected_by = 'Unverified collection'
     else:
