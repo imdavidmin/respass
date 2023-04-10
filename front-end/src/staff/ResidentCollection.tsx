@@ -7,6 +7,7 @@ import { AuthTokenPayload, QueryResult, LocalStorageKey, ItemRecord } from '../t
 import { getSiteConfig, ConfigKey } from '../common/util';
 import { BuildingAndUnitInput } from '../common/Components/BuildingAndUnitInput';
 import { FailureToast, ToastContext } from '../ToastWrapper';
+import { SpinnerMessage } from '../common/Components/SpinnerMessage';
 
 export function ResidentCollection() {
     const [authenticatedResident, setAuthenticatedResident] = useState<AuthTokenPayload>(null);
@@ -123,12 +124,16 @@ function InventoryResults(props: InventoryResultsProps) {
         DatabaseService.queryInventory(props.query, staffJWTToken)
             .then(r => {
                 if (r.length == 0) {
-                    setStatusMsg('🈳 No record of items belonging to this resident')
+                    setStatusMsg(<p><div className="padding-1" style={{ fontSize: '2rem' }}>🈳</div> No record of items for this household.'</p>)
                 } else {
                     setQueryResults(r)
                     setStatusMsg(<div className='flex-centre gap-1'>
                         Click on items collected by resident
-                        <button onClick={() => setIsSubmitting(true)}>Done</button>
+                        <button onClick={() => setIsSubmitting(true)} disabled={isSubmitting}>
+                            {isSubmitting
+                                ? <SpinnerMessage text='Submitting' />
+                                : 'Done'}
+                        </button>
                     </div>)
                     collected.current = r.map(r => false)
                 }

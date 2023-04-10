@@ -9,9 +9,10 @@ export function BuildingAndUnitInput(props: { form: Array<string>; setForm: (f: 
         props.setForm([...props.form]);
     };
 
+    // If form has no selected buildings, set default building as selected
     useEffect(() => {
         !props.form[0] &&
-            props.setForm([buildingData[0].value, props.form[1]]);
+            props.setForm([buildingData?.[0]?.value, props.form[1]]);
     }, [])
 
     return <>

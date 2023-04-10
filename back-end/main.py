@@ -37,7 +37,7 @@ def return_preflight():
         return ''
 
 
-@app.route('/api/<interface>/<path:path>', methods=['GET', 'POST'])
+@app.route('/<interface>/<path:path>', methods=['GET', 'POST'])
 def route_request(interface, path):
     # Validate the API URL path
     paths = valid_routes.get(interface)

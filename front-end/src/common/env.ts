@@ -1,4 +1,4 @@
-const API_ROOT = 'https://respass-1-k1280343.deta.app/api'
+const API_ROOT = 'https://respass-api.lansburysquare.com'
 export const ENV = {
     api: {
         db: {

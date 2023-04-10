@@ -1,5 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import { DatabaseService } from "../common/api";
+import { SpinnerMessage } from "../common/Components/SpinnerMessage";
 import { ToastContext } from "../ToastWrapper";
 import { LocalStorageKey } from "../types";
 import { StaffAppContext } from "./StaffApp";
@@ -43,6 +44,7 @@ export function ReceiveInventory() {
     const [removeRow, setRemoveRow] = useState(null)
     const [isFormComplete, setIsFormComplete] = useState(false)
     const [residents, setResidents] = useState({})
+    const [isSubmitting, setIsSubmitting] = useState(false)
 
     const dataFetchStatus = useContext(StaffAppContext)
     const addToast = useContext(ToastContext)
@@ -70,14 +72,28 @@ export function ReceiveInventory() {
 
         setRemoveRow(null)
     }, [removeRow])
-    
-    function submitForm() {
-        submitEntries(form, (clearForm: boolean) => {
-            if (!clearForm) return
 
+    async function submitForm() {
+        if (form.length == 0) return
+        setIsSubmitting(true)
+        const result = await DatabaseService.addInventory(form, localStorage.getItem(LocalStorageKey.JWT))
+
+        if (result.success) {
             setForm([EMPTY_ROW])
             addToast({ title: '👍 Submitted', message: 'The items are recorded successfully.' })
-        })
+        } else {
+            addToast({
+                title: '🚨 Submission failed',
+                message: <div className="grid gap-1">
+                    The items have not been recorded, try again, or contact support noting the message below.
+                    <span style={{ opacity: 0.8, fontSize: '0.8rem' }}>
+                        {`Status: ${result.res.status}\nMessage: ${await result.res.text()}`}
+                    </span>
+                </div>,
+                barStyle: { background: '#df8000' }
+            })
+        }
+        setIsSubmitting(false)
     }
 
     const formGridStyle = {
@@ -108,9 +124,13 @@ export function ReceiveInventory() {
         {form.length >= 10 &&
             'We recommend submitting for every 10 entries to avoid accidental data loss'
         }
-        <div className="flex-centre gap-1">
+        <div className="flex-centre gap-1" style={{ pointerEvents: isSubmitting ? 'none' : null }}>
             <button onClick={() => setForm([...form, EMPTY_ROW])}>Add another entry</button>
-            <button onClick={submitForm} disabled={!isFormComplete}>Submit</button>
+            <button onClick={submitForm} disabled={!isFormComplete || isSubmitting}>
+                {isSubmitting
+                    ? <SpinnerMessage text="Submitting" />
+                    : 'Submit'}
+            </button>
         </div>
     </>
 }
@@ -155,26 +175,4 @@ function FormRow(props: { row: number, data: Array<any>, residents: {}, updateHa
             {datalistOptions.map(o => <option value={o} />)}
         </datalist>
     </>
-}
-
-async function submitEntries(form: InventoryReceiptForm, onComplete: (clearForm?: boolean) => void) {
-    const result = await DatabaseService.addInventory(form, localStorage.getItem(LocalStorageKey.JWT))
-    if (result.res) {
-        const addToast = useContext(ToastContext)
-        addToast({
-            title: '🚨 Submission failed',
-            message: <div className="grid gap-1">
-                The items have not been recorded, try again, or contact support noting the message below.
-                <span style={{ opacity: 0.8, fontSize: '0.8rem' }}>
-                    {`Status: ${result.res.status}\nMessage: ${await result.res.text()}`}
-                </span>
-            </div>,
-            barStyle: { background: '#df8000' }
-        })
-    }
-    onComplete(result.success)
-}
-
-async function retrieveAllResidents(setResidents: (data) => void) {
-    setResidents({ C: { 606: ['David Min', 'Stefan Bratanov'] } })
 }
